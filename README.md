@@ -124,6 +124,8 @@ Do not append a trailing `.` to that command; Compose treats it as a service nam
 * **Measurement Tool** — Point-to-point distance & bearing measurement on the map
 * **LOCATE Bar** — Search by coordinates (31.8, 34.8) or place name (Tehran, Strait of Hormuz) to fly directly to any location — geocoded via OpenStreetMap Nominatim
 
+![Gaza](https://github.com/user-attachments/assets/f2c953b2-3528-4360-af5a-7ea34ff28489)
+
 ---
 
 ## 🏗️ Architecture
