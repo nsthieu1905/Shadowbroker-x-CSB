@@ -133,6 +133,8 @@ async def live_data_fast(request: Request):
         "uavs": d.get("uavs", []),
         "liveuamap": d.get("liveuamap", []),
         "gps_jamming": d.get("gps_jamming", []),
+        "satellites": d.get("satellites", []),
+        "satellite_source": d.get("satellite_source", "none"),
         "freshness": dict(source_timestamps),
     }
     return _etag_response(request, payload, prefix="fast|")

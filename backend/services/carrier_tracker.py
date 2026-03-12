@@ -26,104 +26,116 @@ logger = logging.getLogger(__name__)
 # Carrier registry: hull number → metadata + fallback position
 # -----------------------------------------------------------------
 CARRIER_REGISTRY: Dict[str, dict] = {
+    # Fallback positions sourced from USNI News Fleet & Marine Tracker (Mar 9, 2026)
+    # https://news.usni.org/2026/03/09/usni-news-fleet-and-marine-tracker-march-9-2026
+    # --- Bremerton, WA (Naval Base Kitsap) ---
+    # Distinct pier positions along Sinclair Inlet so carriers don't stack
     "CVN-68": {
         "name": "USS Nimitz (CVN-68)",
         "wiki": "https://en.wikipedia.org/wiki/USS_Nimitz",
         "homeport": "Bremerton, WA",
-        "homeport_lat": 47.56, "homeport_lng": -122.63,
-        "fallback_lat": 21.35, "fallback_lng": -157.95,
-        "fallback_heading": 270,
-        "fallback_desc": "Pacific Fleet / Pearl Harbor"
-    },
-    "CVN-69": {
-        "name": "USS Dwight D. Eisenhower (CVN-69)",
-        "wiki": "https://en.wikipedia.org/wiki/USS_Dwight_D._Eisenhower",
-        "homeport": "Norfolk, VA",
-        "homeport_lat": 36.95, "homeport_lng": -76.33,
-        "fallback_lat": 18.0, "fallback_lng": 39.5,
-        "fallback_heading": 120,
-        "fallback_desc": "Red Sea / CENTCOM AOR"
-    },
-    "CVN-78": {
-        "name": "USS Gerald R. Ford (CVN-78)",
-        "wiki": "https://en.wikipedia.org/wiki/USS_Gerald_R._Ford",
-        "homeport": "Norfolk, VA",
-        "homeport_lat": 36.95, "homeport_lng": -76.33,
-        "fallback_lat": 34.0, "fallback_lng": 25.0,
+        "homeport_lat": 47.5535, "homeport_lng": -122.6400,
+        "fallback_lat": 47.5535, "fallback_lng": -122.6400,
         "fallback_heading": 90,
-        "fallback_desc": "Eastern Mediterranean deterrence"
-    },
-    "CVN-70": {
-        "name": "USS Carl Vinson (CVN-70)",
-        "wiki": "https://en.wikipedia.org/wiki/USS_Carl_Vinson",
-        "homeport": "San Diego, CA",
-        "homeport_lat": 32.68, "homeport_lng": -117.15,
-        "fallback_lat": 15.0, "fallback_lng": 115.0,
-        "fallback_heading": 45,
-        "fallback_desc": "South China Sea patrol"
-    },
-    "CVN-71": {
-        "name": "USS Theodore Roosevelt (CVN-71)",
-        "wiki": "https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71)",
-        "homeport": "San Diego, CA",
-        "homeport_lat": 32.68, "homeport_lng": -117.15,
-        "fallback_lat": 22.0, "fallback_lng": 122.0,
-        "fallback_heading": 300,
-        "fallback_desc": "Philippine Sea / Taiwan Strait"
-    },
-    "CVN-72": {
-        "name": "USS Abraham Lincoln (CVN-72)",
-        "wiki": "https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72)",
-        "homeport": "San Diego, CA",
-        "homeport_lat": 32.68, "homeport_lng": -117.15,
-        "fallback_lat": 21.0, "fallback_lng": -158.0,
-        "fallback_heading": 270,
-        "fallback_desc": "Pacific deployment"
-    },
-    "CVN-73": {
-        "name": "USS George Washington (CVN-73)",
-        "wiki": "https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73)",
-        "homeport": "Yokosuka, Japan",
-        "homeport_lat": 35.28, "homeport_lng": 139.67,
-        "fallback_lat": 35.0, "fallback_lng": 139.0,
-        "fallback_heading": 0,
-        "fallback_desc": "Yokosuka, Japan (Forward deployed)"
-    },
-    "CVN-74": {
-        "name": "USS John C. Stennis (CVN-74)",
-        "wiki": "https://en.wikipedia.org/wiki/USS_John_C._Stennis",
-        "homeport": "Norfolk, VA",
-        "homeport_lat": 36.95, "homeport_lng": -76.33,
-        "fallback_lat": 36.95, "fallback_lng": -76.33,
-        "fallback_heading": 0,
-        "fallback_desc": "RCOH / Norfolk (maintenance)"
-    },
-    "CVN-75": {
-        "name": "USS Harry S. Truman (CVN-75)",
-        "wiki": "https://en.wikipedia.org/wiki/USS_Harry_S._Truman",
-        "homeport": "Norfolk, VA",
-        "homeport_lat": 36.95, "homeport_lng": -76.33,
-        "fallback_lat": 36.0, "fallback_lng": 15.0,
-        "fallback_heading": 90,
-        "fallback_desc": "Mediterranean deployment"
+        "fallback_desc": "Bremerton, WA (Maintenance)"
     },
     "CVN-76": {
         "name": "USS Ronald Reagan (CVN-76)",
         "wiki": "https://en.wikipedia.org/wiki/USS_Ronald_Reagan",
         "homeport": "Bremerton, WA",
-        "homeport_lat": 47.56, "homeport_lng": -122.63,
-        "fallback_lat": 47.56, "fallback_lng": -122.63,
+        "homeport_lat": 47.5580, "homeport_lng": -122.6360,
+        "fallback_lat": 47.5580, "fallback_lng": -122.6360,
+        "fallback_heading": 90,
+        "fallback_desc": "Bremerton, WA (Decommissioning)"
+    },
+
+    # --- Norfolk, VA (Naval Station Norfolk) ---
+    # Piers run N-S along Willoughby Bay; each carrier gets a distinct berth
+    "CVN-69": {
+        "name": "USS Dwight D. Eisenhower (CVN-69)",
+        "wiki": "https://en.wikipedia.org/wiki/USS_Dwight_D._Eisenhower",
+        "homeport": "Norfolk, VA",
+        "homeport_lat": 36.9465, "homeport_lng": -76.3265,
+        "fallback_lat": 36.9465, "fallback_lng": -76.3265,
         "fallback_heading": 0,
-        "fallback_desc": "Bremerton, WA (Homeport)"
+        "fallback_desc": "Norfolk, VA (Post-deployment maintenance)"
+    },
+    "CVN-78": {
+        "name": "USS Gerald R. Ford (CVN-78)",
+        "wiki": "https://en.wikipedia.org/wiki/USS_Gerald_R._Ford",
+        "homeport": "Norfolk, VA",
+        "homeport_lat": 36.9505, "homeport_lng": -76.3250,
+        "fallback_lat": 18.0, "fallback_lng": 39.5,
+        "fallback_heading": 0,
+        "fallback_desc": "Red Sea — Operation Epic Fury (USNI Mar 9)"
+    },
+    "CVN-74": {
+        "name": "USS John C. Stennis (CVN-74)",
+        "wiki": "https://en.wikipedia.org/wiki/USS_John_C._Stennis",
+        "homeport": "Norfolk, VA",
+        "homeport_lat": 36.9540, "homeport_lng": -76.3235,
+        "fallback_lat": 36.98, "fallback_lng": -76.43,
+        "fallback_heading": 0,
+        "fallback_desc": "Newport News, VA (RCOH refueling overhaul)"
+    },
+    "CVN-75": {
+        "name": "USS Harry S. Truman (CVN-75)",
+        "wiki": "https://en.wikipedia.org/wiki/USS_Harry_S._Truman",
+        "homeport": "Norfolk, VA",
+        "homeport_lat": 36.9580, "homeport_lng": -76.3220,
+        "fallback_lat": 36.0, "fallback_lng": 15.0,
+        "fallback_heading": 0,
+        "fallback_desc": "Mediterranean Sea deployment (USNI Mar 9)"
     },
     "CVN-77": {
         "name": "USS George H.W. Bush (CVN-77)",
         "wiki": "https://en.wikipedia.org/wiki/USS_George_H.W._Bush",
         "homeport": "Norfolk, VA",
-        "homeport_lat": 36.95, "homeport_lng": -76.33,
-        "fallback_lat": 36.95, "fallback_lng": -76.33,
+        "homeport_lat": 36.9620, "homeport_lng": -76.3210,
+        "fallback_lat": 36.5, "fallback_lng": -74.0,
         "fallback_heading": 0,
-        "fallback_desc": "Norfolk, VA (Homeport)"
+        "fallback_desc": "Atlantic — Pre-deployment workups (USNI Mar 9)"
+    },
+
+    # --- San Diego, CA (Naval Base San Diego) ---
+    # Carrier piers along the east shore of San Diego Bay, spread N-S
+    "CVN-70": {
+        "name": "USS Carl Vinson (CVN-70)",
+        "wiki": "https://en.wikipedia.org/wiki/USS_Carl_Vinson",
+        "homeport": "San Diego, CA",
+        "homeport_lat": 32.6840, "homeport_lng": -117.1290,
+        "fallback_lat": 32.6840, "fallback_lng": -117.1290,
+        "fallback_heading": 180,
+        "fallback_desc": "San Diego, CA (Homeport)"
+    },
+    "CVN-71": {
+        "name": "USS Theodore Roosevelt (CVN-71)",
+        "wiki": "https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71)",
+        "homeport": "San Diego, CA",
+        "homeport_lat": 32.6885, "homeport_lng": -117.1280,
+        "fallback_lat": 32.6885, "fallback_lng": -117.1280,
+        "fallback_heading": 180,
+        "fallback_desc": "San Diego, CA (Maintenance)"
+    },
+    "CVN-72": {
+        "name": "USS Abraham Lincoln (CVN-72)",
+        "wiki": "https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72)",
+        "homeport": "San Diego, CA",
+        "homeport_lat": 32.6925, "homeport_lng": -117.1275,
+        "fallback_lat": 20.0, "fallback_lng": 64.0,
+        "fallback_heading": 0,
+        "fallback_desc": "Arabian Sea — Operation Epic Fury (USNI Mar 9)"
+    },
+
+    # --- Yokosuka, Japan (CFAY) ---
+    "CVN-73": {
+        "name": "USS George Washington (CVN-73)",
+        "wiki": "https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73)",
+        "homeport": "Yokosuka, Japan",
+        "homeport_lat": 35.2830, "homeport_lng": 139.6700,
+        "fallback_lat": 35.2830, "fallback_lng": 139.6700,
+        "fallback_heading": 180,
+        "fallback_desc": "Yokosuka, Japan (Forward deployed)"
     },
 }
 
@@ -302,7 +314,8 @@ def _parse_carrier_positions_from_news(articles: List[dict]) -> Dict[str, dict]:
                 "lat": coords[0],
                 "lng": coords[1],
                 "desc": title[:100],
-                "source": "GDELT OSINT",
+                "source": "GDELT News API",
+                "source_url": article.get("url", "https://api.gdeltproject.org"),
                 "updated": datetime.now(timezone.utc).isoformat()
             }
             logger.info(f"Carrier update: {CARRIER_REGISTRY[hull]['name']} → {coords} (from: {title[:80]})")
@@ -316,7 +329,7 @@ def update_carrier_positions():
 
     logger.info("Carrier tracker: updating positions from OSINT sources...")
 
-    # Start with fallback positions
+    # Start with fallback positions (sourced from USNI News Fleet Tracker)
     positions: Dict[str, dict] = {}
     for hull, info in CARRIER_REGISTRY.items():
         positions[hull] = {
@@ -326,7 +339,8 @@ def update_carrier_positions():
             "heading": info["fallback_heading"],
             "desc": info["fallback_desc"],
             "wiki": info["wiki"],
-            "source": "Static OSINT estimate",
+            "source": "USNI News Fleet & Marine Tracker",
+            "source_url": "https://news.usni.org/category/fleet-tracker",
             "updated": datetime.now(timezone.utc).isoformat()
         }
 
@@ -370,6 +384,55 @@ def update_carrier_positions():
     logger.info(f"Carrier tracker: {len(positions)} carriers updated. Sources: {sources}")
 
 
+def _deconflict_positions(result: List[dict]) -> List[dict]:
+    """Offset carriers that share identical coordinates so they don't stack.
+
+    At port: offset along the pier axis (~500m / 0.004° apart).
+    At sea: offset perpendicular to each other (~0.08° / ~9km apart)
+    so they're visibly separate but clearly operating together.
+    """
+    # Group by rounded lat/lng (within ~0.01° ≈ 1km = same spot)
+    from collections import defaultdict
+    groups: dict[str, list[int]] = defaultdict(list)
+    for i, c in enumerate(result):
+        key = f"{round(c['lat'], 2)},{round(c['lng'], 2)}"
+        groups[key].append(i)
+
+    for indices in groups.values():
+        if len(indices) < 2:
+            continue
+        n = len(indices)
+        # Determine if this is a port (near a homeport) or at sea
+        sample = result[indices[0]]
+        at_port = any(
+            abs(sample["lat"] - info.get("homeport_lat", 0)) < 0.05
+            and abs(sample["lng"] - info.get("homeport_lng", 0)) < 0.05
+            for info in CARRIER_REGISTRY.values()
+        )
+
+        if at_port:
+            # Use each carrier's distinct homeport pier coordinates
+            for idx in indices:
+                carrier = result[idx]
+                hull = None
+                for h, info in CARRIER_REGISTRY.items():
+                    if info["name"] == carrier["name"]:
+                        hull = h
+                        break
+                if hull:
+                    info = CARRIER_REGISTRY[hull]
+                    carrier["lat"] = info["homeport_lat"]
+                    carrier["lng"] = info["homeport_lng"]
+        else:
+            # At sea: spread in a line perpendicular to travel (~0.08° apart)
+            spacing = 0.08  # ~9km — close enough to see they're together
+            start_offset = -(n - 1) * spacing / 2
+            for j, idx in enumerate(indices):
+                result[idx]["lng"] += start_offset + j * spacing
+
+    return result
+
+
 def get_carrier_positions() -> List[dict]:
     """Return current carrier positions for the data pipeline."""
     with _positions_lock:
@@ -381,7 +444,7 @@ def get_carrier_positions() -> List[dict]:
                 "type": "carrier",
                 "lat": pos["lat"],
                 "lng": pos["lng"],
-                "heading": pos.get("heading", 0),
+                "heading": None,  # Heading unknown for carriers — OSINT cannot determine true heading
                 "sog": 0,
                 "cog": 0,
                 "country": "United States",
@@ -389,9 +452,10 @@ def get_carrier_positions() -> List[dict]:
                 "wiki": pos.get("wiki", info.get("wiki", "")),
                 "estimated": True,
                 "source": pos.get("source", "OSINT estimated position"),
+                "source_url": pos.get("source_url", "https://news.usni.org/category/fleet-tracker"),
                 "last_osint_update": pos.get("updated", "")
             })
-        return result
+        return _deconflict_positions(result)
 
 
 # -----------------------------------------------------------------

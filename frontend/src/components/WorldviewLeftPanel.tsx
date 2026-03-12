@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, AlertTriangle, Activity, Satellite, Cctv, ChevronDown, ChevronUp, Ship, Eye, Anchor, Settings, Sun, Moon, BookOpen, Radio, Play, Pause, Globe, Flame, Wifi, Server, Shield } from "lucide-react";
+import { Plane, AlertTriangle, Activity, Satellite, Cctv, ChevronDown, ChevronUp, Ship, Eye, Anchor, Settings, Sun, Moon, BookOpen, Radio, Play, Pause, Globe, Flame, Wifi, Server, Shield, ToggleLeft, ToggleRight } from "lucide-react";
+import packageJson from "../../package.json";
 import { useTheme } from "@/lib/ThemeContext";
 
 function relativeTime(iso: string | undefined): string {
@@ -62,6 +63,7 @@ const WorldviewLeftPanel = React.memo(function WorldviewLeftPanel({ data, active
     const [isMinimized, setIsMinimized] = useState(false);
     const { theme, toggleTheme } = useTheme();
     const [gibsPlaying, setGibsPlaying] = useState(false);
+    const [potusEnabled, setPotusEnabled] = useState(true);
     const gibsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // GIBS time slider play/pause animation
@@ -124,7 +126,7 @@ const WorldviewLeftPanel = React.memo(function WorldviewLeftPanel({ data, active
         { id: "military", name: "Military Flights", source: "adsb.lol", count: data?.military_flights?.length || 0, icon: AlertTriangle },
         { id: "tracked", name: "Tracked Aircraft", source: "Plane-Alert DB", count: data?.tracked_flights?.length || 0, icon: Eye },
         { id: "earthquakes", name: "Earthquakes (24h)", source: "USGS", count: data?.earthquakes?.length || 0, icon: Activity },
-        { id: "satellites", name: "Satellites", source: "CelesTrak SGP4", count: data?.satellites?.length || 0, icon: Satellite },
+        { id: "satellites", name: "Satellites", source: data?.satellite_source === "celestrak" ? "CelesTrak SGP4" : data?.satellite_source === "tle_api" ? "TLE API · SGP4" : data?.satellite_source === "disk_cache" ? "Cached · SGP4 (est.)" : "CelesTrak SGP4", count: data?.satellites?.length || 0, icon: Satellite },
         { id: "ships_important", name: "Carriers / Mil / Cargo", source: "AIS Stream", count: importantShipCount, icon: Ship },
         { id: "ships_civilian", name: "Civilian Vessels", source: "AIS Stream", count: civilianShipCount, icon: Anchor },
         { id: "ships_passenger", name: "Cruise / Passenger", source: "AIS Stream", count: passengerShipCount, icon: Anchor },
@@ -158,7 +160,7 @@ const WorldviewLeftPanel = React.memo(function WorldviewLeftPanel({ data, active
                     <h1 className="text-2xl font-bold tracking-[0.2em] text-[var(--text-heading)]">FLIR</h1>
                     <button
                         onClick={toggleTheme}
-                        className="w-7 h-7 rounded-lg border border-[var(--border-primary)] hover:border-cyan-500/50 flex items-center justify-center text-[var(--text-muted)] hover:text-cyan-400 transition-all hover:bg-[var(--hover-accent)]"
+                        className={`w-7 h-7 rounded-lg border border-[var(--border-primary)] hover:border-cyan-500/50 flex items-center justify-center ${theme === 'dark' ? 'text-cyan-400' : 'text-[var(--text-muted)]'} hover:text-cyan-300 transition-all hover:bg-[var(--hover-accent)]`}
                         title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                     >
                         {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
@@ -166,7 +168,7 @@ const WorldviewLeftPanel = React.memo(function WorldviewLeftPanel({ data, active
                     {onSettingsClick && (
                         <button
                             onClick={onSettingsClick}
-                            className="w-7 h-7 rounded-lg border border-[var(--border-primary)] hover:border-cyan-500/50 flex items-center justify-center text-[var(--text-muted)] hover:text-cyan-400 transition-all hover:bg-[var(--hover-accent)] group"
+                            className={`w-7 h-7 rounded-lg border border-[var(--border-primary)] hover:border-cyan-500/50 flex items-center justify-center ${theme === 'dark' ? 'text-cyan-400' : 'text-[var(--text-muted)]'} hover:text-cyan-300 transition-all hover:bg-[var(--hover-accent)] group`}
                             title="System Settings"
                         >
                             <Settings size={14} className="group-hover:rotate-90 transition-transform duration-300" />
@@ -175,13 +177,16 @@ const WorldviewLeftPanel = React.memo(function WorldviewLeftPanel({ data, active
                     {onLegendClick && (
                         <button
                             onClick={onLegendClick}
-                            className="h-7 px-2 rounded-lg border border-[var(--border-primary)] hover:border-cyan-500/50 flex items-center justify-center gap-1 text-[var(--text-muted)] hover:text-cyan-400 transition-all hover:bg-[var(--hover-accent)]"
+                            className={`h-7 px-2 rounded-lg border border-[var(--border-primary)] hover:border-cyan-500/50 flex items-center justify-center gap-1 ${theme === 'dark' ? 'text-cyan-400' : 'text-[var(--text-muted)]'} hover:text-cyan-300 transition-all hover:bg-[var(--hover-accent)]`}
                             title="Map Legend / Icon Key"
                         >
                             <BookOpen size={12} />
                             <span className="text-[8px] font-mono tracking-widest font-bold">KEY</span>
                         </button>
                     )}
+                    <span className={`h-7 px-2 rounded-lg border border-[var(--border-primary)] flex items-center justify-center text-[8px] ${theme === 'dark' ? 'text-cyan-400' : 'text-[var(--text-muted)]'} font-mono tracking-widest select-none`}>
+                        v{packageJson.version}
+                    </span>
                 </div>
             </div>
 
@@ -191,12 +196,30 @@ const WorldviewLeftPanel = React.memo(function WorldviewLeftPanel({ data, active
                 {/* Header / Toggle */}
                 <div
                     className="flex justify-between items-center p-4 cursor-pointer hover:bg-[var(--bg-secondary)]/50 transition-colors border-b border-[var(--border-primary)]/50"
-                    onClick={() => setIsMinimized(!isMinimized)}
                 >
-                    <span className="text-[10px] text-[var(--text-muted)] font-mono tracking-widest">DATA LAYERS</span>
-                    <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
-                        {isMinimized ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-                    </button>
+                    <span className="text-[10px] text-[var(--text-muted)] font-mono tracking-widest" onClick={() => setIsMinimized(!isMinimized)}>DATA LAYERS</span>
+                    <div className="flex items-center gap-2">
+                        <button
+                            title={Object.entries(activeLayers).filter(([k]) => k !== 'gibs_imagery').every(([, v]) => v) ? "Disable all layers" : "Enable all layers"}
+                            className={`${Object.entries(activeLayers).filter(([k]) => k !== 'gibs_imagery').every(([, v]) => v) ? 'text-cyan-400' : 'text-[var(--text-muted)]'} hover:text-cyan-400 transition-colors`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const allOn = Object.entries(activeLayers).filter(([k]) => k !== 'gibs_imagery').every(([, v]) => v);
+                                setActiveLayers((prev: any) => {
+                                    const next: any = {};
+                                    for (const k of Object.keys(prev)) {
+                                        next[k] = k === 'gibs_imagery' ? false : !allOn;
+                                    }
+                                    return next;
+                                });
+                            }}
+                        >
+                            {Object.entries(activeLayers).filter(([k]) => k !== 'gibs_imagery').every(([, v]) => v) ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                        </button>
+                        <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors" onClick={() => setIsMinimized(!isMinimized)}>
+                            {isMinimized ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                        </button>
+                    </div>
                 </div>
 
                 <AnimatePresence>
@@ -208,6 +231,61 @@ const WorldviewLeftPanel = React.memo(function WorldviewLeftPanel({ data, active
                             className="overflow-y-auto styled-scrollbar"
                         >
                             <div className="flex flex-col gap-6 p-4 pt-2 pb-6">
+                                {/* POTUS Fleet — pinned to TOP when aircraft are active */}
+                                {potusEnabled && potusFlights.length > 0 && (
+                                    <div className="bg-[#ff1493]/5 border border-[#ff1493]/30 rounded-lg p-3 -mt-1">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <Shield size={14} className="text-[#ff1493]" />
+                                                <span className="text-[10px] text-[#ff1493] font-mono tracking-widest font-bold">POTUS FLEET</span>
+                                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-[#ff1493]/20 border border-[#ff1493]/40 text-[#ff1493] animate-pulse">
+                                                    {potusFlights.length} ACTIVE
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setPotusEnabled(false); }}
+                                                className="text-[8px] font-mono text-[var(--text-muted)] hover:text-[#ff1493] border border-[var(--border-primary)] hover:border-[#ff1493]/40 rounded px-1.5 py-0.5 transition-colors"
+                                                title="Hide POTUS Fleet tracker"
+                                            >
+                                                HIDE
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            {potusFlights.map((pf) => {
+                                                const color = pf.meta.type === 'AF1' ? '#ff1493' : pf.meta.type === 'M1' ? '#ff1493' : '#3b82f6';
+                                                const alt = pf.flight.alt_baro || pf.flight.alt || 0;
+                                                const speed = pf.flight.gs || pf.flight.speed || 0;
+                                                return (
+                                                    <div
+                                                        key={pf.flight.icao24}
+                                                        className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all hover:bg-[var(--bg-secondary)]/60"
+                                                        style={{ borderColor: `${color}40`, background: `${color}10` }}
+                                                        onClick={() => {
+                                                            if (onFlyTo && pf.flight.lat != null && pf.flight.lng != null) {
+                                                                onFlyTo(pf.flight.lat, pf.flight.lng);
+                                                            }
+                                                            if (onEntityClick) {
+                                                                onEntityClick({ type: 'tracked_flight', id: pf.index });
+                                                            }
+                                                        }}
+                                                    >
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] font-bold font-mono" style={{ color }}>{pf.meta.label}</span>
+                                                            <span className="text-[8px] text-[var(--text-muted)] font-mono mt-0.5">
+                                                                {alt > 0 ? `${Math.round(alt).toLocaleString()} ft` : 'GND'} · {speed > 0 ? `${Math.round(speed)} kts` : 'STATIC'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: color }} />
+                                                            <span className="text-[8px] font-mono" style={{ color }}>TRACK</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {layers.map((layer, idx) => {
                                     const Icon = layer.icon;
                                     const active = activeLayers[layer.id as keyof typeof activeLayers] || false;
@@ -294,57 +372,27 @@ const WorldviewLeftPanel = React.memo(function WorldviewLeftPanel({ data, active
                                     )
                                 })}
 
-                                {/* POTUS Fleet Tracker */}
-                                <div className="border-t border-[var(--border-primary)]/50 pt-4 mt-2">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <Shield size={14} className="text-[#ff1493]" />
-                                        <span className="text-[10px] text-[#ff1493] font-mono tracking-widest font-bold">POTUS FLEET</span>
-                                        {potusFlights.length > 0 && (
-                                            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-[#ff1493]/20 border border-[#ff1493]/40 text-[#ff1493] animate-pulse">
-                                                {potusFlights.length} ACTIVE
-                                            </span>
-                                        )}
+                                {/* POTUS Fleet — bottom section when inactive or hidden */}
+                                {(potusFlights.length === 0 || !potusEnabled) && (
+                                    <div className="border-t border-[var(--border-primary)]/50 pt-4 mt-2">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Shield size={14} className="text-[var(--text-muted)]" />
+                                                <span className="text-[10px] text-[var(--text-muted)] font-mono tracking-widest">POTUS FLEET</span>
+                                            </div>
+                                            {!potusEnabled ? (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setPotusEnabled(true); }}
+                                                    className="text-[8px] font-mono text-[var(--text-muted)] hover:text-[#ff1493] border border-[var(--border-primary)] hover:border-[#ff1493]/40 rounded px-1.5 py-0.5 transition-colors"
+                                                >
+                                                    SHOW
+                                                </button>
+                                            ) : (
+                                                <span className="text-[8px] font-mono text-[var(--text-muted)]">NO ACTIVE AIRCRAFT</span>
+                                            )}
+                                        </div>
                                     </div>
-                                    {potusFlights.length === 0 ? (
-                                        <div className="ml-5 text-[9px] text-[var(--text-muted)] font-mono">
-                                            No POTUS fleet aircraft currently airborne
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col gap-2 ml-1">
-                                            {potusFlights.map((pf) => {
-                                                const color = pf.meta.type === 'AF1' ? '#ff1493' : pf.meta.type === 'M1' ? '#ff1493' : '#3b82f6';
-                                                const alt = pf.flight.alt_baro || pf.flight.alt || 0;
-                                                const speed = pf.flight.gs || pf.flight.speed || 0;
-                                                return (
-                                                    <div
-                                                        key={pf.flight.icao24}
-                                                        className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all hover:bg-[var(--bg-secondary)]/60"
-                                                        style={{ borderColor: `${color}40`, background: `${color}10` }}
-                                                        onClick={() => {
-                                                            if (onFlyTo && pf.flight.lat != null && pf.flight.lng != null) {
-                                                                onFlyTo(pf.flight.lat, pf.flight.lng);
-                                                            }
-                                                            if (onEntityClick) {
-                                                                onEntityClick({ type: 'tracked_flight', id: pf.index });
-                                                            }
-                                                        }}
-                                                    >
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] font-bold font-mono" style={{ color }}>{pf.meta.label}</span>
-                                                            <span className="text-[8px] text-[var(--text-muted)] font-mono mt-0.5">
-                                                                {alt > 0 ? `${Math.round(alt).toLocaleString()} ft` : 'GND'} · {speed > 0 ? `${Math.round(speed)} kts` : 'STATIC'}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: color }} />
-                                                            <span className="text-[8px] font-mono" style={{ color }}>TRACK</span>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
+                                )}
                             </div>
                         </motion.div>
                     )}

@@ -89,12 +89,13 @@ export default function FindLocateBar({ data, onLocate, onFilter }: FindLocateBa
             });
         }
 
-        // Tracked flights
+        // Tracked flights — include tags/owner/name for broad search (first name, last name, etc.)
         for (const f of data?.tracked_flights || []) {
             const uid = f.icao24 || f.registration || f.callsign || '';
             const operator = f.alert_operator || 'Unknown Operator';
             const category = f.alert_category || 'Tracked';
             const type = f.alert_type || f.model || 'Unknown';
+            const extras = [f.alert_tags, f.owner, f.name, f.callsign].filter(Boolean).join(' ');
             results.push({
                 id: `tracked-${uid}`,
                 label: operator,
@@ -104,7 +105,8 @@ export default function FindLocateBar({ data, onLocate, onFilter }: FindLocateBa
                 lat: f.lat,
                 lng: f.lng,
                 entityType: "tracked_flight",
-            });
+                _extra: extras,
+            } as any);
         }
 
         // Ships
@@ -144,7 +146,7 @@ export default function FindLocateBar({ data, onLocate, onFilter }: FindLocateBa
         const q = query.toLowerCase();
         return allEntities
             .filter(e => {
-                const searchable = `${e.label} ${e.sublabel} ${e.id}`.toLowerCase();
+                const searchable = `${e.label} ${e.sublabel} ${e.id} ${(e as any)._extra || ''}`.toLowerCase();
                 return searchable.includes(q);
             })
             .slice(0, 12);
@@ -177,7 +179,7 @@ export default function FindLocateBar({ data, onLocate, onFilter }: FindLocateBa
                     ref={inputRef}
                     type="text"
                     value={query}
-                    placeholder="Find aircraft or vessel..."
+                    placeholder="Find aircraft, person or vessel..."
                     className="flex-1 bg-transparent text-[10px] text-[var(--text-secondary)] font-mono tracking-wider outline-none placeholder:text-[var(--text-muted)]"
                     onChange={(e) => {
                         setQuery(e.target.value);

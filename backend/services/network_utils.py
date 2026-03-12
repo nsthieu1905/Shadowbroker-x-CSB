@@ -24,6 +24,11 @@ _BASH_PATH = shutil.which("bash") or "bash"
 _domain_fail_cache: dict[str, float] = {}
 _DOMAIN_FAIL_TTL = 300  # 5 minutes
 
+# Circuit breaker: track domains where BOTH requests AND curl fail
+# If a domain failed completely within the last 2 minutes, skip it entirely
+_circuit_breaker: dict[str, float] = {}
+_CIRCUIT_BREAKER_TTL = 120  # 2 minutes
+
 class _DummyResponse:
     """Minimal response object matching requests.Response interface."""
     def __init__(self, status_code, text):
@@ -54,6 +59,10 @@ def fetch_with_curl(url, method="GET", json_data=None, timeout=15, headers=None)
 
     domain = urlparse(url).netloc
 
+    # Circuit breaker: if domain failed completely <2min ago, fail fast
+    if domain in _circuit_breaker and (time.time() - _circuit_breaker[domain]) < _CIRCUIT_BREAKER_TTL:
+        raise Exception(f"Circuit breaker open for {domain} (failed <{_CIRCUIT_BREAKER_TTL}s ago)")
+
     # Check if this domain recently failed with requests — skip straight to curl
     if domain in _domain_fail_cache and (time.time() - _domain_fail_cache[domain]) < _DOMAIN_FAIL_TTL:
         pass  # Fall through to curl below
@@ -64,8 +73,9 @@ def fetch_with_curl(url, method="GET", json_data=None, timeout=15, headers=None)
             else:
                 res = _session.get(url, timeout=timeout, headers=default_headers)
             res.raise_for_status()
-            # Clear failure cache on success
+            # Clear failure caches on success
             _domain_fail_cache.pop(domain, None)
+            _circuit_breaker.pop(domain, None)
             return res
         except Exception as e:
             logger.warning(f"Python requests failed for {url} ({e}), falling back to bash curl...")
@@ -92,10 +102,14 @@ def fetch_with_curl(url, method="GET", json_data=None, timeout=15, headers=None)
                 lines = res.stdout.rstrip().rsplit("\n", 1)
                 body = lines[0] if len(lines) > 1 else res.stdout
                 http_code = int(lines[-1]) if len(lines) > 1 and lines[-1].strip().isdigit() else 200
+                if http_code < 400:
+                    _circuit_breaker.pop(domain, None)  # Clear circuit breaker on success
                 return _DummyResponse(http_code, body)
             else:
                 logger.error(f"bash curl fallback failed: exit={res.returncode} stderr={res.stderr[:200]}")
+                _circuit_breaker[domain] = time.time()
                 return _DummyResponse(500, "")
         except Exception as curl_e:
             logger.error(f"bash curl fallback exception: {curl_e}")
+            _circuit_breaker[domain] = time.time()
             return _DummyResponse(500, "")

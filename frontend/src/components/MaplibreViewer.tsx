@@ -95,7 +95,12 @@ const svgPotusPlane = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns=
 const svgPotusHeli = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="none" stroke="gold" stroke-width="2" stroke-dasharray="4 2"/><g transform="translate(6,4)"><path d="M10 6L10 14L8 16L8 18L10 17L12 22L14 17L16 18L16 16L14 14L14 6C14 4 13 2 12 2C11 2 10 4 10 6Z" fill="#FF1493" stroke="black"/><circle cx="12" cy="12" r="8" fill="none" stroke="#FF1493" stroke-dasharray="2 2" stroke-width="1"/></g></svg>`)}`;
 
 // POTUS fleet ICAO hex codes (verified FAA registry)
-const POTUS_ICAOS = new Set(['ADFDF8','ADFDF9','AE0865','AE5E76','AE5E77','AE5E79']);
+const POTUS_ICAOS = new Set([
+    'ADFDF8','ADFDF9',                                          // Air Force One (VC-25A)
+    'ADFEB7','ADFEB8','ADFEB9','ADFEBA',                        // Air Force Two (C-32A)
+    'AE4AE6','AE4AE8','AE4AEA','AE4AEC',                        // Air Force Two (C-32B)
+    'AE0865','AE5E76','AE5E77','AE5E79',                         // Marine One (VH-3D / VH-92A)
+]);
 
 // Pre-built aircraft SVGs by type & color
 const svgAirlinerCyan = makeAircraftSvg('airliner', 'cyan');
@@ -334,10 +339,10 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
         dataTimestamp.current = Date.now();
     }, [data?.commercial_flights, data?.ships, data?.satellites]);
 
-    // Tick every 2s between data refreshes to animate positions
+    // Tick every 1s between data refreshes to animate positions
     // Satellites move ~7km/s so need frequent updates for smooth motion
     useEffect(() => {
-        const timer = setInterval(() => setInterpTick(t => t + 1), 2000);
+        const timer = setInterval(() => setInterpTick(t => t + 1), 1000);
         return () => clearInterval(timer);
     }, []);
 
@@ -566,8 +571,10 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                     type: 'datacenter',
                     name: dc.name || 'Unknown',
                     company: dc.company || '',
+                    street: dc.street || '',
                     city: dc.city || '',
                     country: dc.country || '',
+                    zip: dc.zip || '',
                 },
                 geometry: { type: 'Point' as const, coordinates: [dc.lng, dc.lat] }
             }))
@@ -733,10 +740,8 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
 
     // Helper: interpolate a flight's position if airborne and has speed+heading
     const interpFlight = (f: any): [number, number] => {
-        // Fast path: skip trig for stationary/grounded/no-speed aircraft
         if (!f.speed_knots || f.speed_knots <= 0 || dtSeconds <= 0) return [f.lng, f.lat];
         if (f.alt != null && f.alt <= 100) return [f.lng, f.lat];
-        // Only interpolate if enough time has passed to matter (>1s)
         if (dtSeconds < 1) return [f.lng, f.lat];
         const heading = f.true_track || f.heading || 0;
         const [newLat, newLng] = interpolatePosition(f.lat, f.lng, heading, f.speed_knots, dtSeconds);
@@ -752,8 +757,6 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
     };
 
     // Helper: interpolate a satellite's position between API updates
-    // Satellites have deterministic orbits so linear interpolation over 60s is accurate
-    // maxDt=65 allows full interval coverage (60s update + 5s buffer)
     const interpSat = (s: any): [number, number] => {
         if (!s.speed_knots || s.speed_knots <= 0 || dtSeconds < 1) return [s.lng, s.lat];
         const [newLat, newLng] = interpolatePosition(s.lat, s.lng, s.heading || 0, s.speed_knots, dtSeconds, 0, 65);
@@ -768,15 +771,9 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
             features: data.satellites.filter((s: any) => s.lat != null && s.lng != null && inView(s.lat, s.lng)).map((s: any, i: number) => ({
                 type: 'Feature' as const,
                 properties: {
-                    id: s.id || i,
-                    type: 'satellite',
-                    name: s.name,
-                    mission: s.mission || 'general',
-                    sat_type: s.sat_type || 'Satellite',
-                    country: s.country || '',
-                    alt_km: s.alt_km || 0,
-                    wiki: s.wiki || '',
-                    color: MISSION_COLORS[s.mission] || '#aaaaaa',
+                    id: s.id || i, type: 'satellite', name: s.name, mission: s.mission || 'general',
+                    sat_type: s.sat_type || 'Satellite', country: s.country || '', alt_km: s.alt_km || 0,
+                    wiki: s.wiki || '', color: MISSION_COLORS[s.mission] || '#aaaaaa',
                     iconId: MISSION_ICON_MAP[s.mission] || 'sat-gen'
                 },
                 geometry: { type: 'Point' as const, coordinates: interpSat(s) }
@@ -784,8 +781,6 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
         };
     }, [activeLayers.satellites, data?.satellites, dtSeconds, inView]);
 
-
-    // Create GeoJSON collections dynamically (this runs ultra fast in pure JS)
     const commFlightsGeoJSON = useMemo(() => {
         if (!activeLayers.flights || !data?.commercial_flights) return null;
         return {
@@ -848,7 +843,6 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
 
     const milFlightsGeoJSON = useMemo(() => {
         if (!activeLayers.military || !data?.military_flights) return null;
-
         return {
             type: 'FeatureCollection',
             features: data.military_flights.map((f: any, i: number) => {
@@ -877,34 +871,21 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
 
     const shipsGeoJSON = useMemo(() => {
         if (!(activeLayers.ships_important || activeLayers.ships_civilian || activeLayers.ships_passenger) || !data?.ships) return null;
-
         return {
             type: 'FeatureCollection',
             features: data.ships.map((s: any, i: number) => {
                 if (s.lat == null || s.lng == null) return null;
                 if (!inView(s.lat, s.lng)) return null;
-
                 const isImportant = s.type === 'carrier' || s.type === 'military_vessel' || s.type === 'tanker' || s.type === 'cargo';
                 const isPassenger = s.type === 'passenger';
-
-                // Carriers are now handled by a dedicated unclustered source
                 if (s.type === 'carrier') return null;
-
                 if (isImportant && activeLayers?.ships_important === false) return null;
                 if (isPassenger && activeLayers?.ships_passenger === false) return null;
                 if (!isImportant && !isPassenger && activeLayers?.ships_civilian === false) return null;
-
                 let iconId = 'svgShipBlue';
-                if (s.type === 'carrier') {
-                    iconId = 'svgCarrier';
-                } else if (s.type === 'tanker' || s.type === 'cargo') {
-                    iconId = 'svgShipRed';
-                } else if (s.type === 'yacht' || s.type === 'passenger') {
-                    iconId = 'svgShipWhite';
-                } else if (s.type === 'military_vessel') {
-                    iconId = 'svgShipYellow';
-                }
-
+                if (s.type === 'tanker' || s.type === 'cargo') iconId = 'svgShipRed';
+                else if (s.type === 'yacht' || s.type === 'passenger') iconId = 'svgShipWhite';
+                else if (s.type === 'military_vessel') iconId = 'svgShipYellow';
                 const [iLng, iLat] = interpShip(s);
                 return {
                     type: 'Feature',
@@ -994,11 +975,10 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
             type: 'FeatureCollection',
             features: data.ships.map((s: any, i: number) => {
                 if (s.type !== 'carrier' || s.lat == null || s.lng == null) return null;
-                const [iLng, iLat] = interpShip(s);
                 return {
                     type: 'Feature',
                     properties: { id: i, type: 'ship', name: s.name, rotation: s.heading || 0, iconId: 'svgCarrier' },
-                    geometry: { type: 'Point', coordinates: [iLng, iLat] }
+                    geometry: { type: 'Point', coordinates: [s.lng, s.lat] }
                 };
             }).filter(Boolean)
         };
@@ -1030,11 +1010,21 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
         }
 
         const features = [];
+        // Extract IATA codes from "IATA: Airport Name" format
+        const originCode = (entity.origin_name || '').split(':')[0]?.trim() || '';
+        const destCode = (entity.dest_name || '').split(':')[0]?.trim() || '';
+
         if (originLoc) {
             features.push({
                 type: 'Feature',
                 properties: { type: 'route-origin' },
                 geometry: { type: 'LineString', coordinates: [currentLoc, originLoc] }
+            });
+            // Airport dot at origin
+            features.push({
+                type: 'Feature',
+                properties: { type: 'airport', code: originCode, role: 'DEP' },
+                geometry: { type: 'Point', coordinates: originLoc }
             });
         }
         if (destLoc) {
@@ -1042,6 +1032,12 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                 type: 'Feature',
                 properties: { type: 'route-dest' },
                 geometry: { type: 'LineString', coordinates: [currentLoc, destLoc] }
+            });
+            // Airport dot at destination
+            features.push({
+                type: 'Feature',
+                properties: { type: 'airport', code: destCode, role: 'ARR' },
+                geometry: { type: 'Point', coordinates: destLoc }
             });
         }
 
@@ -1185,6 +1181,7 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
         }));
     }, [data?.news, Math.round(viewState.zoom)]);
 
+    // Tracked flights GeoJSON with interpolation
     const trackedFlightsGeoJSON = useMemo(() => {
         if (!activeLayers.tracked || !data?.tracked_flights) return null;
 
@@ -1196,30 +1193,28 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
             bizjet: { '#ff1493': 'svgBizjetPink', pink: 'svgBizjetPink', red: 'svgBizjetRed', blue: 'svgBizjetBlue', darkblue: 'svgBizjetDarkBlue', yellow: 'svgBizjetYellow', orange: 'svgBizjetOrange', purple: 'svgBizjetPurple', '#32cd32': 'svgBizjetLime', black: 'svgBizjetBlack', white: 'svgBizjetWhite' },
         };
 
-        return {
-            type: 'FeatureCollection',
-            features: data.tracked_flights.map((f: any, i: number) => {
-                if (f.lat == null || f.lng == null) return null;
+        const features: any[] = [];
+        for (let i = 0; i < data.tracked_flights.length; i++) {
+            const f = data.tracked_flights[i];
+            if (f.lat == null || f.lng == null) continue;
 
-                const alertColor = f.alert_color || 'white';
-                const acType = classifyAircraft(f.model, f.aircraft_category);
-                const grounded = f.alt != null && f.alt <= 100;
-                const icaoHex = (f.icao24 || '').toUpperCase();
-                // POTUS fleet gets oversized gold-ringed icon
-                const isPotus = POTUS_ICAOS.has(icaoHex);
-                const potusIcon = acType === 'heli' ? 'svgPotusHeli' : 'svgPotusPlane';
-                const iconId = grounded ? GROUNDED_ICON_MAP[acType] : isPotus ? potusIcon : (trackedIconMap[acType]?.[alertColor] || trackedIconMap.airliner[alertColor] || 'svgAirlinerWhite');
+            const [lng, lat] = interpFlight(f);
+            const alertColor = f.alert_color || 'white';
+            const acType = classifyAircraft(f.model, f.aircraft_category);
+            const grounded = f.alt != null && f.alt <= 100;
+            const icaoHex = (f.icao24 || '').toUpperCase();
+            const isPotus = POTUS_ICAOS.has(icaoHex);
+            const potusIcon = acType === 'heli' ? 'svgPotusHeli' : 'svgPotusPlane';
+            const iconId = isPotus ? potusIcon : grounded ? GROUNDED_ICON_MAP[acType] : (trackedIconMap[acType]?.[alertColor] || trackedIconMap.airliner[alertColor] || 'svgAirlinerWhite');
+            const displayName = f.alert_operator || f.operator || f.owner || f.name || f.callsign || f.icao24 || "UNKNOWN";
 
-                const displayName = f.alert_operator || f.operator || f.owner || f.name || f.callsign || f.icao24 || "UNKNOWN";
-
-                const [iLng, iLat] = interpFlight(f);
-                return {
-                    type: 'Feature',
-                    properties: { id: i, type: 'tracked_flight', callsign: String(displayName), rotation: f.heading || 0, iconId },
-                    geometry: { type: 'Point', coordinates: [iLng, iLat] }
-                };
-            }).filter(Boolean)
-        };
+            features.push({
+                type: 'Feature',
+                properties: { id: i, type: 'tracked_flight', callsign: String(displayName), rotation: f.heading || 0, iconId },
+                geometry: { type: 'Point', coordinates: [lng, lat] }
+            });
+        }
+        return { type: 'FeatureCollection', features };
     }, [activeLayers.tracked, data?.tracked_flights, dtSeconds]);
 
     const uavGeoJSON = useMemo(() => {
@@ -1294,6 +1289,7 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
 
 
 
+    // Interactive layer IDs for click handling
     const activeInteractiveLayerIds = [
         commFlightsGeoJSON && 'commercial-flights-layer',
         privFlightsGeoJSON && 'private-flights-layer',
@@ -1317,19 +1313,15 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
     ].filter(Boolean) as string[];
 
 
-    // --- Imperative source updates for high-volume layers ---
-    // Bypasses React reconciliation of huge GeoJSON FeatureCollections.
-    // The <Source data={EMPTY_FC}> mounts the source; the hook pushes real data.
+    // --- Imperative source updates: bypass React reconciliation for GeoJSON layers ---
     const mapForHook = mapReady ? mapRef.current : null;
-    // Flights & UAVs: immediate (they move fast, stale = visually wrong)
     useImperativeSource(mapForHook, 'commercial-flights', commFlightsGeoJSON);
     useImperativeSource(mapForHook, 'private-flights', privFlightsGeoJSON);
     useImperativeSource(mapForHook, 'private-jets', privJetsGeoJSON);
     useImperativeSource(mapForHook, 'military-flights', milFlightsGeoJSON);
     useImperativeSource(mapForHook, 'tracked-flights', trackedFlightsGeoJSON);
     useImperativeSource(mapForHook, 'uavs', uavGeoJSON);
-    // Satellites & fires: 2s debounce (slow-changing, high feature count)
-    useImperativeSource(mapForHook, 'satellites', satellitesGeoJSON, 2000);
+    useImperativeSource(mapForHook, 'satellites', satellitesGeoJSON);
     useImperativeSource(mapForHook, 'firms-fires', firmsGeoJSON, 2000);
 
     const handleMouseMove = useCallback((evt: any) => {
@@ -1353,7 +1345,7 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                     onViewStateChange?.({ zoom: evt.viewState.zoom, latitude: evt.viewState.latitude });
                     // Debounce bounds update to avoid thrashing during drag
                     if (boundsTimerRef.current) clearTimeout(boundsTimerRef.current);
-                    boundsTimerRef.current = setTimeout(updateBounds, 300);
+                    boundsTimerRef.current = setTimeout(updateBounds, 500);
                 }}
                 onMouseMove={handleMouseMove}
                 onContextMenu={(evt) => {
@@ -1404,6 +1396,25 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                             beforeId="imagery-ceiling"
                             paint={{
                                 'raster-opacity': 1,
+                                'raster-fade-duration': 300
+                            }}
+                        />
+                    </Source>
+                )}
+                {/* Esri Reference Overlay — borders, labels, cities on top of satellite imagery */}
+                {activeLayers.highres_satellite && (
+                    <Source
+                        id="esri-reference-overlay"
+                        type="raster"
+                        tiles={['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}']}
+                        tileSize={256}
+                        maxzoom={18}
+                    >
+                        <Layer
+                            id="esri-reference-overlay-layer"
+                            type="raster"
+                            paint={{
+                                'raster-opacity': 0.9,
                                 'raster-fade-duration': 300
                             }}
                         />
@@ -1635,17 +1646,50 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                         <Layer
                             id="active-route-layer"
                             type="line"
+                            filter={['in', ['get', 'type'], ['literal', ['route-origin', 'route-dest']]]}
                             paint={{
                                 'line-color': [
                                     'match',
                                     ['get', 'type'],
-                                    'route-origin', '#38bdf8', // light blue
-                                    'route-dest', '#fcd34d', // yellow
+                                    'route-origin', '#38bdf8',
+                                    'route-dest', '#fcd34d',
                                     '#ffffff'
                                 ],
                                 'line-width': 2,
                                 'line-dasharray': [2, 2],
                                 'line-opacity': 0.8
+                            }}
+                        />
+                        {/* Airport dots at origin/destination */}
+                        <Layer
+                            id="airport-dots"
+                            type="circle"
+                            filter={['==', ['get', 'type'], 'airport']}
+                            paint={{
+                                'circle-radius': 5,
+                                'circle-color': ['match', ['get', 'role'], 'DEP', '#38bdf8', 'ARR', '#fcd34d', '#ffffff'],
+                                'circle-stroke-color': '#000',
+                                'circle-stroke-width': 1.5,
+                                'circle-opacity': 0.9
+                            }}
+                        />
+                        {/* IATA code labels at airports */}
+                        <Layer
+                            id="airport-labels"
+                            type="symbol"
+                            filter={['==', ['get', 'type'], 'airport']}
+                            layout={{
+                                'text-field': ['get', 'code'],
+                                'text-font': ['Noto Sans Bold'],
+                                'text-size': 11,
+                                'text-offset': [0, -1.4],
+                                'text-anchor': 'bottom',
+                                'text-allow-overlap': true,
+                            }}
+                            paint={{
+                                'text-color': ['match', ['get', 'role'], 'DEP', '#38bdf8', 'ARR', '#fcd34d', '#ffffff'],
+                                'text-halo-color': '#000',
+                                'text-halo-width': 1.5,
                             }}
                         />
                     </Source>
@@ -1668,12 +1712,33 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
 
                 {/* tracked-flights & UAVs: data pushed imperatively */}
                     <Source id="tracked-flights" type="geojson" data={EMPTY_FC as any}>
+                        {/* Gold halo ring — POTUS aircraft only (Air Force One/Two, Marine One) */}
+                        <Layer
+                            id="tracked-flights-halo"
+                            type="circle"
+                            filter={['any',
+                                ['==', ['get', 'iconId'], 'svgPotusPlane'],
+                                ['==', ['get', 'iconId'], 'svgPotusHeli'],
+                            ]}
+                            paint={{
+                                'circle-radius': 18,
+                                'circle-color': 'transparent',
+                                'circle-stroke-width': 2,
+                                'circle-stroke-color': 'gold',
+                                'circle-stroke-opacity': opacityFilter,
+                                'circle-opacity': 0,
+                            }}
+                        />
                         <Layer
                             id="tracked-flights-layer"
                             type="symbol"
                             layout={{
                                 'icon-image': ['get', 'iconId'],
-                                'icon-size': 0.8,
+                                'icon-size': ['case',
+                                    ['==', ['get', 'iconId'], 'svgPotusPlane'], 1.3,
+                                    ['==', ['get', 'iconId'], 'svgPotusHeli'], 1.3,
+                                    0.8
+                                ],
                                 'icon-allow-overlap': true,
                                 'icon-rotate': ['get', 'rotation'],
                                 'icon-rotation-alignment': 'map'
@@ -2463,12 +2528,30 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                                         Speed: <span style={{ color: '#00e5ff' }}>{ship.sog.toFixed(1)} kn</span>
                                     </div>
                                 )}
-                                {ship.heading != null && (
-                                    <div style={{ marginBottom: 4 }}>
-                                        Heading: <span style={{ color: '#888' }}>{Math.round(ship.heading)}°</span>
+                                <div style={{ marginBottom: 4 }}>
+                                    Heading: <span style={{ color: ship.heading != null ? '#888' : '#ff6644' }}>
+                                        {ship.heading != null ? `${Math.round(ship.heading)}°` : 'UNKNOWN'}
+                                    </span>
+                                </div>
+                                {ship.type === 'carrier' && ship.source && (
+                                    <div style={{ marginTop: 6, padding: '5px 7px', background: 'rgba(255,170,0,0.08)', border: '1px solid rgba(255,170,0,0.3)', borderRadius: 4, fontSize: 9, letterSpacing: 1 }}>
+                                        <div style={{ color: '#ffaa00', marginBottom: 3 }}>
+                                            SOURCE: {ship.source_url ? (
+                                                <a href={ship.source_url} target="_blank" rel="noopener noreferrer"
+                                                    style={{ color: '#00e5ff', textDecoration: 'underline' }}>{ship.source}</a>
+                                            ) : (
+                                                <span style={{ color: '#fff' }}>{ship.source}</span>
+                                            )}
+                                        </div>
+                                        {ship.last_osint_update && (
+                                            <div style={{ color: '#888' }}>LAST OSINT UPDATE: {new Date(ship.last_osint_update).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+                                        )}
+                                        {ship.desc && (
+                                            <div style={{ color: '#aaa', marginTop: 3, fontSize: 8, lineHeight: 1.3 }}>{ship.desc}</div>
+                                        )}
                                     </div>
                                 )}
-                                {ship.last_osint_update && (
+                                {ship.type !== 'carrier' && ship.last_osint_update && (
                                     <div style={{ marginBottom: 4 }}>
                                         Last OSINT Update: <span style={{ color: '#888' }}>{new Date(ship.last_osint_update).toLocaleDateString()}</span>
                                     </div>
@@ -2503,6 +2586,11 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                                 {dc.company && (
                                     <div style={{ marginBottom: 4 }}>
                                         Operator: <span style={{ color: '#c4b5fd' }}>{dc.company}</span>
+                                    </div>
+                                )}
+                                {dc.street && (
+                                    <div style={{ marginBottom: 4 }}>
+                                        Address: <span style={{ color: '#fff' }}>{dc.street}{dc.zip ? ` ${dc.zip}` : ''}</span>
                                     </div>
                                 )}
                                 {dc.city && (
@@ -2741,7 +2829,7 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                padding: '60px 20px 20px 20px',
+                                padding: '60px 20px 80px 20px',
                             }}
                             onClick={(e) => { if (e.target === e.currentTarget) onEntityClick(null); }}
                             onKeyDown={(e: any) => { if (e.key === 'Escape') onEntityClick(null); }}
@@ -2750,14 +2838,14 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                         >
                             <div style={{
                                 background: 'rgba(0,0,0,0.95)',
-                                border: '1px solid rgba(59,130,246,0.5)',
+                                border: '1px solid rgba(34,197,94,0.5)',
                                 borderRadius: 12,
                                 overflow: 'hidden',
                                 maxWidth: 'calc(100vw - 40px)',
                                 maxHeight: 'calc(100vh - 80px)',
                                 display: 'flex',
                                 flexDirection: 'column',
-                                boxShadow: '0 0 60px rgba(59,130,246,0.3)',
+                                boxShadow: '0 0 60px rgba(34,197,94,0.3)',
                             }}>
                                 {/* Header bar */}
                                 <div style={{
@@ -2765,17 +2853,17 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                                     alignItems: 'center',
                                     justifyContent: 'space-between',
                                     padding: '10px 16px',
-                                    background: 'rgba(30,58,138,0.4)',
-                                    borderBottom: '1px solid rgba(59,130,246,0.3)',
+                                    background: 'rgba(20,83,45,0.4)',
+                                    borderBottom: '1px solid rgba(34,197,94,0.3)',
                                 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#60a5fa', animation: 'pulse 2s infinite' }} />
-                                        <span style={{ fontSize: 11, color: '#60a5fa', fontFamily: 'monospace', letterSpacing: '0.2em', fontWeight: 'bold' }}>
+                                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', animation: 'pulse 2s infinite' }} />
+                                        <span style={{ fontSize: 11, color: '#4ade80', fontFamily: 'monospace', letterSpacing: '0.2em', fontWeight: 'bold' }}>
                                             SENTINEL-2 IMAGERY
                                         </span>
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                        <span style={{ fontSize: 10, color: 'rgba(147,197,253,0.6)', fontFamily: 'monospace' }}>
+                                        <span style={{ fontSize: 10, color: 'rgba(134,239,172,0.6)', fontFamily: 'monospace' }}>
                                             {selectedEntity.extra.lat.toFixed(4)}, {selectedEntity.extra.lng.toFixed(4)}
                                         </span>
                                         <button
@@ -2807,11 +2895,11 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                                             padding: '8px 16px',
                                             fontSize: 11,
                                             fontFamily: 'monospace',
-                                            borderBottom: '1px solid rgba(30,58,138,0.4)',
+                                            borderBottom: '1px solid rgba(20,83,45,0.4)',
                                         }}>
-                                            <span style={{ color: '#93c5fd' }}>{s2.platform}</span>
-                                            <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>{s2.datetime?.slice(0, 10)}</span>
-                                            <span style={{ color: '#93c5fd' }}>{s2.cloud_cover?.toFixed(0)}% cloud</span>
+                                            <span style={{ color: '#86efac' }}>{s2.platform}</span>
+                                            <span style={{ color: '#4ade80', fontWeight: 'bold' }}>{s2.datetime?.slice(0, 10)}</span>
+                                            <span style={{ color: '#86efac' }}>{s2.cloud_cover?.toFixed(0)}% cloud</span>
                                         </div>
 
                                         {/* Image */}
@@ -2829,7 +2917,7 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                                                 />
                                             </div>
                                         ) : (
-                                            <div style={{ padding: '40px 16px', fontSize: 11, color: 'rgba(147,197,253,0.5)', fontFamily: 'monospace', textAlign: 'center' }}>
+                                            <div style={{ padding: '40px 16px', fontSize: 11, color: 'rgba(134,239,172,0.5)', fontFamily: 'monospace', textAlign: 'center' }}>
                                                 Scene found — no preview available
                                             </div>
                                         )}
@@ -2842,8 +2930,8 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                                                 justifyContent: 'center',
                                                 gap: 12,
                                                 padding: '10px 16px',
-                                                background: 'rgba(30,58,138,0.3)',
-                                                borderTop: '1px solid rgba(59,130,246,0.2)',
+                                                background: 'rgba(20,83,45,0.3)',
+                                                borderTop: '1px solid rgba(34,197,94,0.2)',
                                             }}>
                                                 <a
                                                     href={imgUrl}
@@ -2851,10 +2939,10 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     style={{
-                                                        background: 'rgba(59,130,246,0.2)',
-                                                        border: '1px solid rgba(59,130,246,0.5)',
+                                                        background: 'rgba(34,197,94,0.2)',
+                                                        border: '1px solid rgba(34,197,94,0.5)',
                                                         borderRadius: 6,
-                                                        color: '#60a5fa',
+                                                        color: '#4ade80',
                                                         fontSize: 10,
                                                         fontFamily: 'monospace',
                                                         padding: '6px 16px',
@@ -2880,10 +2968,10 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                                                         }
                                                     }}
                                                     style={{
-                                                        background: 'rgba(34,211,238,0.15)',
-                                                        border: '1px solid rgba(34,211,238,0.4)',
+                                                        background: 'rgba(34,197,94,0.15)',
+                                                        border: '1px solid rgba(34,197,94,0.4)',
                                                         borderRadius: 6,
-                                                        color: '#22d3ee',
+                                                        color: '#4ade80',
                                                         fontSize: 10,
                                                         fontFamily: 'monospace',
                                                         padding: '6px 16px',
@@ -2918,7 +3006,7 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                                         )}
                                     </>
                                 ) : (
-                                    <div style={{ padding: '40px 16px', fontSize: 11, color: 'rgba(147,197,253,0.5)', fontFamily: 'monospace', textAlign: 'center' }}>
+                                    <div style={{ padding: '40px 16px', fontSize: 11, color: 'rgba(134,239,172,0.5)', fontFamily: 'monospace', textAlign: 'center' }}>
                                         No clear imagery in last 30 days
                                     </div>
                                 )}

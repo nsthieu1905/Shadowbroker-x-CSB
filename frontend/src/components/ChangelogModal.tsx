@@ -2,45 +2,60 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Zap, Gauge, Anchor, Layers, Bug } from "lucide-react";
+import { X, Zap, Shield, Satellite, MapPin, Palette, ToggleRight, Bug, Heart } from "lucide-react";
 
-const CURRENT_VERSION = "0.7";
+const CURRENT_VERSION = "0.8";
 const STORAGE_KEY = `shadowbroker_changelog_v${CURRENT_VERSION}`;
 
 const NEW_FEATURES = [
     {
-        icon: <Gauge size={14} className="text-green-400" />,
-        title: "Parallelized Data Fetches",
-        desc: "Stock and oil ticker fetches now run in parallel via ThreadPoolExecutor — backend data updates ~4x faster (~2s vs ~8s serial).",
-        color: "green",
+        icon: <Shield size={14} className="text-pink-400" />,
+        title: "POTUS Fleet Tracking",
+        desc: "Air Force One, Air Force Two, and Marine One aircraft now display with oversized hot-pink icons and a gold dashed halo ring — instantly recognizable on the map.",
+        color: "pink",
     },
     {
-        icon: <Anchor size={14} className="text-blue-400" />,
-        title: "AIS WebSocket Stability",
-        desc: "Exponential backoff now properly resets after 200 consecutive successes. Removed lock-contention vessel pruning — replaced with time-based logging every 60s.",
-        color: "blue",
-    },
-    {
-        icon: <Zap size={14} className="text-yellow-400" />,
-        title: "Deferred Icon Loading",
-        desc: "~35 critical map icons load immediately on startup. ~50 non-critical icons (fire markers, satellites, color variants) are deferred — faster initial map render.",
+        icon: <Palette size={14} className="text-yellow-400" />,
+        title: "Full Aircraft Color-Coding",
+        desc: "9-color system: military (yellow), medical/rescue (lime), police/government (blue), privacy (black), VIPs (hot pink), dictators/oligarchs (red), and more — all enriched from plane_alert_db.",
         color: "yellow",
     },
     {
-        icon: <Layers size={14} className="text-cyan-400" />,
-        title: "Smarter Data Tiering",
-        desc: "Satellites removed from fast endpoint (was duplicated). Geopolitics polling reduced from 5min to 30min. Single-pass ETag serialization — clients get 304 Not Modified most of the time.",
+        icon: <Satellite size={14} className="text-green-400" />,
+        title: "Sentinel-2 Satellite Overhaul",
+        desc: "Replaced the tiny satellite popup with a fullscreen image overlay. Added Download, Copy to Clipboard, and Open Full Res buttons. Green dossier-themed UI.",
+        color: "green",
+    },
+    {
+        icon: <MapPin size={14} className="text-blue-400" />,
+        title: "Region Dossier & Carrier Fidelity",
+        desc: "Fixed Nominatim 429 rate-limit errors with retry/backoff. Carriers at shared homeports now dock at distinct pier positions instead of stacking.",
+        color: "blue",
+    },
+    {
+        icon: <Zap size={14} className="text-cyan-400" />,
+        title: "Overhauled Map Legend & Controls",
+        desc: "Full 9-color aircraft legend with POTUS fleet, wildfires, and infrastructure sections. New version badge, update checker, and Discussions shortcut in the UI.",
         color: "cyan",
+    },
+    {
+        icon: <ToggleRight size={14} className="text-purple-400" />,
+        title: "Toggle All Data Layers",
+        desc: "One-click button to enable/disable all data layers at once. Turns cyan when active. MODIS Terra excluded from bulk toggle to prevent accidental imagery load.",
+        color: "purple",
     },
 ];
 
 const BUG_FIXES = [
-    "News feed entrance animations capped at 15 items — no more 100+ simultaneous Framer Motion instances",
-    "FIRMS fire hotspots and internet outages use heapq.nlargest() instead of full sort — faster processing of 60K+ records",
-    "Ship counts in left panel memoized with single-pass loop instead of 3 separate filter calls",
-    "Color map objects extracted to module-level constants — no allocation on every 2s tick",
-    "GDELT headline extraction improved — skips gibberish URL slugs and hex IDs",
-    "Multi-arch Docker images now available (amd64 + arm64) — runs on Raspberry Pi and Apple Silicon",
+    "POTUS fleet ICAO codes expanded — all Air Force Two (C-32A/B) airframes now correctly identified with gold halo",
+    "POTUS icon priority fixed — presidential aircraft always show the POTUS icon even when grounded",
+    "Sentinel-2 imagery no longer overlaps the bottom coordinate bar",
+    "Docker ENV format warnings resolved (legacy syntax → key=value)",
+    "Settings/Key/Version buttons now cyan in dark mode, grey only in light mode",
+];
+
+const CONTRIBUTORS = [
+    { name: "@suranyami", desc: "Parallel multi-arch Docker builds (11min → 3min) + runtime BACKEND_URL fix", pr: "#35, #44" },
 ];
 
 export function useChangelog() {
@@ -141,6 +156,26 @@ const ChangelogModal = React.memo(function ChangelogModal({ onClose }: Changelog
                                     <div key={i} className="flex items-start gap-2 px-3 py-1.5">
                                         <span className="text-green-500 text-[10px] mt-0.5 flex-shrink-0">+</span>
                                         <span className="text-[9px] font-mono text-[var(--text-secondary)] leading-relaxed">{fix}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Contributors */}
+                        <div>
+                            <div className="text-[9px] font-mono tracking-[0.2em] text-pink-400 font-bold mb-3 flex items-center gap-2">
+                                <Heart size={10} className="text-pink-400" />
+                                COMMUNITY CONTRIBUTORS
+                            </div>
+                            <div className="space-y-1.5">
+                                {CONTRIBUTORS.map((c, i) => (
+                                    <div key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg border border-pink-500/20 bg-pink-500/5">
+                                        <span className="text-pink-400 text-[10px] mt-0.5 flex-shrink-0">&hearts;</span>
+                                        <div>
+                                            <span className="text-[10px] font-mono text-pink-300 font-bold">{c.name}</span>
+                                            <span className="text-[9px] font-mono text-[var(--text-muted)]"> — {c.desc}</span>
+                                            <span className="text-[8px] font-mono text-[var(--text-muted)]"> (PR {c.pr})</span>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

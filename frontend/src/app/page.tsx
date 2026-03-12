@@ -10,6 +10,7 @@ import NewsFeed from "@/components/NewsFeed";
 import MarketsPanel from "@/components/MarketsPanel";
 import FilterPanel from "@/components/FilterPanel";
 import FindLocateBar from "@/components/FindLocateBar";
+import TopRightControls from "@/components/TopRightControls";
 import RadioInterceptPanel from "@/components/RadioInterceptPanel";
 import SettingsPanel from "@/components/SettingsPanel";
 import MapLegend from "@/components/MapLegend";
@@ -28,7 +29,7 @@ function LocateBar({ onLocate }: { onLocate: (lat: number, lng: number) => void 
   const [results, setResults] = useState<{ label: string; lat: number; lng: number }[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
 
@@ -50,7 +51,7 @@ function LocateBar({ onLocate }: { onLocate: (lat: number, lng: number) => void 
       return;
     }
     // Geocode with Nominatim (debounced)
-    clearTimeout(timerRef.current);
+    if (timerRef.current) clearTimeout(timerRef.current);
     if (q.trim().length < 2) { setResults([]); return; }
     timerRef.current = setTimeout(async () => {
       setLoading(true);
@@ -347,7 +348,7 @@ export default function Dashboard() {
     // Adaptive polling: retry every 3s during startup, back off to normal cadence once data arrives
     const scheduleNext = (tier: 'fast' | 'slow') => {
       if (tier === 'fast') {
-        const delay = hasData ? 60000 : 3000; // 3s startup retry → 60s steady state
+        const delay = hasData ? 15000 : 3000; // 3s startup retry → 15s steady state
         fastTimerId = setTimeout(fetchFastData, delay);
       } else {
         const delay = hasData ? 120000 : 5000; // 5s startup retry → 120s steady state
@@ -442,6 +443,8 @@ export default function Dashboard() {
 
           {/* RIGHT HUD CONTAINER */}
           <div className="absolute right-6 top-24 bottom-6 w-80 flex flex-col gap-4 z-[200] pointer-events-auto overflow-y-auto styled-scrollbar pr-2">
+            <TopRightControls />
+
             {/* FIND / LOCATE */}
             <div className="flex-shrink-0">
               <FindLocateBar
@@ -489,8 +492,8 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* BOTTOM CENTER COORDINATE / LOCATION BAR */}
-          <motion.div
+          {/* BOTTOM CENTER COORDINATE / LOCATION BAR — hidden when Sentinel-2 imagery overlay is open */}
+          {!(selectedEntity?.type === 'region_dossier' && regionDossier?.sentinel2) && <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 1 }}
@@ -546,7 +549,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </motion.div>}
         </>
       )}
 

@@ -14,7 +14,7 @@ const _cache: Record<string, { url: string | null; done: boolean }> = {};
  *   maxH:     Max height class (default "max-h-32")
  *   accent:   Border hover color class (default "hover:border-cyan-500/50")
  */
-export default function WikiImage({ wikiUrl, label, maxH = 'max-h-32', accent = 'hover:border-cyan-500/50' }: {
+export default function WikiImage({ wikiUrl, label, maxH = 'max-h-52', accent = 'hover:border-cyan-500/50' }: {
     wikiUrl: string;
     label?: string;
     maxH?: string;
@@ -56,7 +56,7 @@ export default function WikiImage({ wikiUrl, label, maxH = 'max-h-32', accent = 
                     <img
                         src={imgUrl}
                         alt={label || title.replace(/_/g, ' ')}
-                        className={`w-full h-auto ${maxH} object-cover rounded border border-[var(--border-primary)]/50 ${accent} transition-colors`}
+                        className={`w-full h-auto ${maxH} object-contain rounded border border-[var(--border-primary)]/50 ${accent} transition-colors`}
                     />
                 </a>
             )}

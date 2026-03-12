@@ -467,7 +467,8 @@ def fetch_news():
     source_weights = {f["name"]: f["weight"] for f in feed_config}
     
     clusters = {}
-    
+    _cluster_grid = {}  # spatial hash grid: (cell_x, cell_y) → [cluster_keys]
+
     # Fetch all feeds in parallel for speed (each has a 10s timeout)
     def _fetch_feed(item):
         source_name, url = item
@@ -540,20 +541,25 @@ def fetch_news():
                             break
                         
             # If mapped, check if there is an existing cluster within ~400km (4 degrees) to merge them
+            # Uses spatial hash grid (4° cells) for O(1) lookup instead of O(n) scan
             if lat is not None:
                 key = None
-                for existing_key in clusters.keys():
-                    if "," in existing_key:
-                        parts = existing_key.split(",")
-                        try:
+                cell_x, cell_y = int(lng // 4), int(lat // 4)
+                for dx in range(-1, 2):
+                    for dy in range(-1, 2):
+                        for ckey in _cluster_grid.get((cell_x + dx, cell_y + dy), []):
+                            parts = ckey.split(",")
                             elat, elng = float(parts[0]), float(parts[1])
                             if ((lat - elat)**2 + (lng - elng)**2)**0.5 < 4.0:
-                                key = existing_key
+                                key = ckey
                                 break
-                        except ValueError:
-                            pass
+                        if key:
+                            break
+                    if key:
+                        break
                 if key is None:
                     key = f"{lat},{lng}"
+                    _cluster_grid.setdefault((cell_x, cell_y), []).append(key)
             else:
                 key = title
                 
@@ -1193,11 +1199,11 @@ def fetch_flights():
             if hex_id:
                 seen_hexes.add(hex_id)
 
-        # Prune stale trails (10 min for non-tracked, 30 min for tracked)
+        # Prune stale trails (5 min for non-tracked, 30 min for tracked)
         tracked_hexes = {t.get('icao24', '').lower() for t in latest_data.get('tracked_flights', [])}
         stale_keys = []
         for k, v in flight_trails.items():
-            cutoff = now_ts - 1800 if k in tracked_hexes else now_ts - 600
+            cutoff = now_ts - 1800 if k in tracked_hexes else now_ts - 300
             if v['last_seen'] < cutoff:
                 stale_keys.append(k)
         for k in stale_keys:
@@ -1308,17 +1314,25 @@ def fetch_ships():
     """Fetch real-time AIS vessel data and combine with OSINT carrier positions."""
     from services.ais_stream import get_ais_vessels
     from services.carrier_tracker import get_carrier_positions
-    
+
     ships = []
-    
+
     # Dynamic OSINT carrier positions (updated from GDELT + cache)
-    carriers = get_carrier_positions()
-    ships.extend(carriers)
-    
+    try:
+        carriers = get_carrier_positions()
+        ships.extend(carriers)
+    except Exception as e:
+        logger.error(f"Carrier tracker error (non-fatal): {e}")
+        carriers = []
+
     # Real AIS vessel data from aisstream.io
-    ais_vessels = get_ais_vessels()
-    ships.extend(ais_vessels)
-    
+    try:
+        ais_vessels = get_ais_vessels()
+        ships.extend(ais_vessels)
+    except Exception as e:
+        logger.error(f"AIS stream error (non-fatal): {e}")
+        ais_vessels = []
+
     logger.info(f"Ships: {len(carriers)} carriers + {len(ais_vessels)} AIS vessels")
     latest_data['ships'] = ships
     _mark_fresh("ships")
@@ -1677,123 +1691,37 @@ def fetch_internet_outages():
     if outages:
         _mark_fresh("internet_outages")
 
-_DC_CACHE_PATH = Path(__file__).parent.parent / "data" / "datacenters.json"
-_DC_URL = "https://raw.githubusercontent.com/Ringmast4r/Data-Center-Map---Global/1f290297c6a11454dc7a47bf95aef7cf0fe1d34c/datacenters_cleaned.json"
-
-# Country bounding boxes (lat_min, lat_max, lng_min, lng_max) for coordinate validation.
-# The source dataset has abs(lat) for all Southern Hemisphere entries, so we fix the sign
-# and then validate the result falls within the country's bounding box.
-_COUNTRY_BBOX: dict[str, tuple[float, float, float, float]] = {
-    "Argentina": (-55, -21, -74, -53), "Australia": (-44, -10, 112, 154),
-    "Bolivia": (-23, -9, -70, -57), "Brazil": (-34, 6, -74, -34),
-    "Chile": (-56, -17, -76, -66), "Colombia": (-5, 13, -82, -66),
-    "Ecuador": (-5, 2, -81, -75), "Indonesia": (-11, 6, 95, 141),
-    "Kenya": (-5, 5, 34, 42), "Madagascar": (-26, -12, 43, 51),
-    "Mozambique": (-27, -10, 30, 41), "New Zealand": (-47, -34, 166, 179),
-    "Paraguay": (-28, -19, -63, -54), "Peru": (-18, 0, -82, -68),
-    "South Africa": (-35, -22, 16, 33), "Tanzania": (-12, -1, 29, 41),
-    "Uruguay": (-35, -30, -59, -53), "Zimbabwe": (-23, -15, 25, 34),
-    # Northern-hemisphere countries for validation only
-    "United States": (24, 72, -180, -65), "Canada": (41, 84, -141, -52),
-    "United Kingdom": (49, 61, -9, 2), "Germany": (47, 55, 5, 16),
-    "France": (41, 51, -5, 10), "Japan": (24, 46, 123, 146),
-    "India": (6, 36, 68, 98), "China": (18, 54, 73, 135),
-    "Singapore": (1, 2, 103, 105), "Spain": (36, 44, -10, 5),
-    "Netherlands": (50, 54, 3, 8), "Sweden": (55, 70, 11, 25),
-    "Italy": (36, 47, 6, 19), "Russia": (41, 82, 19, 180),
-    "Mexico": (14, 33, -118, -86), "Nigeria": (4, 14, 2, 15),
-    "Thailand": (5, 21, 97, 106), "Malaysia": (0, 8, 99, 120),
-    "Philippines": (4, 21, 116, 127), "South Korea": (33, 39, 124, 132),
-    "Taiwan": (21, 26, 119, 123), "Hong Kong": (22, 23, 113, 115),
-    "Vietnam": (8, 24, 102, 110), "Poland": (49, 55, 14, 25),
-    "Switzerland": (45, 48, 5, 11), "Austria": (46, 49, 9, 17),
-    "Belgium": (49, 52, 2, 7), "Denmark": (54, 58, 8, 16),
-    "Finland": (59, 70, 20, 32), "Norway": (57, 72, 4, 32),
-    "Ireland": (51, 56, -11, -5), "Portugal": (36, 42, -10, -6),
-    "Turkey": (35, 42, 25, 45), "Israel": (29, 34, 34, 36),
-    "UAE": (22, 27, 51, 56), "Saudi Arabia": (16, 33, 34, 56),
-}
-
-# Countries whose DCs always sit south of the equator
-_SOUTHERN_COUNTRIES = {
-    "Argentina", "Australia", "Bolivia", "Brazil", "Chile", "Madagascar",
-    "Mozambique", "New Zealand", "Paraguay", "Peru", "South Africa",
-    "Tanzania", "Uruguay", "Zimbabwe",
-}
-
-
-def _fix_dc_coords(lat: float, lng: float, country: str) -> tuple[float, float] | None:
-    """Fix and validate data-center coordinates against the stated country.
-
-    The source dataset stores abs(lat) for Southern-Hemisphere entries.
-    We negate lat when the country is in the Southern Hemisphere, then
-    validate the result falls within the country bounding box (if known).
-    Returns corrected (lat, lng) or None if the coords are clearly wrong.
-    """
-    # Fix Southern Hemisphere sign
-    if country in _SOUTHERN_COUNTRIES and lat > 0:
-        lat = -lat
-
-    bbox = _COUNTRY_BBOX.get(country)
-    if bbox:
-        lat_min, lat_max, lng_min, lng_max = bbox
-        if lat_min <= lat <= lat_max and lng_min <= lng <= lng_max:
-            return lat, lng
-        # Try swapping sign as last resort (some entries are just wrong sign)
-        if lat_min <= -lat <= lat_max and lng_min <= lng <= lng_max:
-            return -lat, lng
-        # Coords don't match country at all — drop the entry
-        return None
-
-    # No bbox for this country — basic sanity only
-    return lat, lng
+_DC_GEOCODED_PATH = Path(__file__).parent.parent / "data" / "datacenters_geocoded.json"
 
 
 def fetch_datacenters():
-    """Load data center locations (static dataset, cached locally after first fetch)."""
+    """Load geocoded data centers (5K+ street-level precise locations)."""
     dcs = []
     try:
-        raw = None
-        # Use local cache if it exists and is less than 7 days old
-        if _DC_CACHE_PATH.exists():
-            age_days = (time.time() - _DC_CACHE_PATH.stat().st_mtime) / 86400
-            if age_days < 7:
-                raw = json.loads(_DC_CACHE_PATH.read_text(encoding="utf-8"))
-        # Otherwise fetch from GitHub
-        if raw is None:
-            resp = fetch_with_curl(_DC_URL, timeout=20)
-            if resp.status_code == 200:
-                raw = resp.json()
-                _DC_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-                _DC_CACHE_PATH.write_text(json.dumps(raw), encoding="utf-8")
-        if raw:
-            dropped = 0
-            for entry in raw:
-                coords = entry.get("city_coords")
-                if not coords or not isinstance(coords, list) or len(coords) < 2:
-                    continue
-                lat, lng = coords[0], coords[1]
-                if not (-90 <= lat <= 90 and -180 <= lng <= 180):
-                    continue
-                country = entry.get("country", "")
-                fixed = _fix_dc_coords(lat, lng, country)
-                if fixed is None:
-                    dropped += 1
-                    continue
-                lat, lng = fixed
-                dcs.append({
-                    "name": entry.get("name", "Unknown"),
-                    "company": entry.get("company", ""),
-                    "city": entry.get("city", ""),
-                    "country": country,
-                    "lat": lat,
-                    "lng": lng,
-                })
-            if dropped:
-                logger.info(f"Data centers: dropped {dropped} entries with mismatched coordinates")
-        logger.info(f"Data centers: {len(dcs)} with valid coordinates (from {'cache' if _DC_CACHE_PATH.exists() else 'GitHub'})")
+        if not _DC_GEOCODED_PATH.exists():
+            logger.warning(f"Geocoded DC file not found: {_DC_GEOCODED_PATH}")
+            return
+        raw = json.loads(_DC_GEOCODED_PATH.read_text(encoding="utf-8"))
+        for entry in raw:
+            lat = entry.get("lat")
+            lng = entry.get("lng")
+            if lat is None or lng is None:
+                continue
+            if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+                continue
+            dcs.append({
+                "name": entry.get("name", "Unknown"),
+                "company": entry.get("company", ""),
+                "street": entry.get("street", ""),
+                "city": entry.get("city", ""),
+                "country": entry.get("country", ""),
+                "zip": entry.get("zip", ""),
+                "lat": lat,
+                "lng": lng,
+            })
+        logger.info(f"Data centers: {len(dcs)} geocoded locations loaded")
     except Exception as e:
-        logger.error(f"Error fetching data centers: {e}")
+        logger.error(f"Error loading data centers: {e}")
     latest_data["datacenters"] = dcs
     if dcs:
         _mark_fresh("datacenters")
@@ -1859,7 +1787,37 @@ def fetch_earthquakes():
         _mark_fresh("earthquakes")
 
 # Satellite GP data cache — re-download from CelesTrak only every 30 minutes
-_sat_gp_cache = {"data": None, "last_fetch": 0}
+_sat_gp_cache = {"data": None, "last_fetch": 0, "source": "none"}
+_sat_classified_cache = {"data": None, "gp_fetch_ts": 0}  # Cache classified sat list (skip re-classification when TLEs unchanged)
+_SAT_CACHE_PATH = Path(__file__).parent.parent / "data" / "sat_gp_cache.json"
+
+def _load_sat_cache():
+    """Load satellite GP data from local disk cache."""
+    try:
+        if _SAT_CACHE_PATH.exists():
+            import os
+            age_hours = (time.time() - os.path.getmtime(str(_SAT_CACHE_PATH))) / 3600
+            if age_hours < 48:  # Use cache if less than 48 hours old
+                with open(_SAT_CACHE_PATH, "r") as f:
+                    data = json.load(f)
+                if isinstance(data, list) and len(data) > 10:
+                    logger.info(f"Satellites: Loaded {len(data)} records from disk cache ({age_hours:.1f}h old)")
+                    return data
+            else:
+                logger.info(f"Satellites: Disk cache is {age_hours:.0f}h old, will try fresh fetch")
+    except Exception as e:
+        logger.warning(f"Satellites: Failed to load disk cache: {e}")
+    return None
+
+def _save_sat_cache(data):
+    """Save satellite GP data to local disk cache."""
+    try:
+        _SAT_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(_SAT_CACHE_PATH, "w") as f:
+            json.dump(data, f)
+        logger.info(f"Satellites: Saved {len(data)} records to disk cache")
+    except Exception as e:
+        logger.warning(f"Satellites: Failed to save disk cache: {e}")
 
 # Satellite intelligence classification database — module-level constant.
 # Key: substring to match in OBJECT_NAME → {country, mission, sat_type, wiki}
@@ -1961,31 +1919,39 @@ def _fetch_satellites_from_tle_api():
         term = key.split()[0] if len(key.split()) > 1 and key.split()[0] in ("USA", "NROL") else key
         search_terms.add(term)
 
-    all_results = []
-    seen_ids = set()
-    for term in search_terms:
+    def _fetch_term(term):
+        """Fetch a single search term from TLE API."""
+        results = []
         try:
             url = f"https://tle.ivanstanojevic.me/api/tle/?search={term}&page_size=100&format=json"
-            response = fetch_with_curl(url, timeout=10)
+            response = fetch_with_curl(url, timeout=8)
             if response.status_code != 200:
-                continue
+                return results
             data = response.json()
             for member in data.get("member", []):
-                sat_id = member.get("satelliteId")
-                if sat_id in seen_ids:
-                    continue
-                seen_ids.add(sat_id)
                 gp = _parse_tle_to_gp(
                     member.get("name", "UNKNOWN"),
-                    sat_id,
+                    member.get("satelliteId"),
                     member.get("line1", ""),
                     member.get("line2", ""),
                 )
                 if gp:
-                    all_results.append(gp)
+                    results.append(gp)
         except Exception as e:
             logger.debug(f"TLE fallback search '{term}' failed: {e}")
-            continue
+        return results
+
+    # Fetch ALL search terms in parallel (was sequential — 35+ requests taking forever)
+    all_results = []
+    seen_ids = set()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_map = {executor.submit(_fetch_term, term): term for term in search_terms}
+        for future in concurrent.futures.as_completed(future_map):
+            for gp in future.result():
+                sat_id = gp.get("NORAD_CAT_ID")
+                if sat_id not in seen_ids:
+                    seen_ids.add(sat_id)
+                    all_results.append(gp)
 
     return all_results
 
@@ -1998,25 +1964,28 @@ def fetch_satellites():
         now_ts = time.time()
         if _sat_gp_cache["data"] is None or (now_ts - _sat_gp_cache["last_fetch"]) > 1800:
             # Try multiple CelesTrak mirrors — .org is often blocked/banned by some networks
+            # Short timeout (5s) so we fail fast and hit the TLE fallback quickly
             gp_urls = [
                 "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json",
                 "https://celestrak.com/NORAD/elements/gp.php?GROUP=active&FORMAT=json",
             ]
             for url in gp_urls:
                 try:
-                    response = fetch_with_curl(url, timeout=8)
+                    response = fetch_with_curl(url, timeout=5)
                     if response.status_code == 200:
                         gp_data = response.json()
                         if isinstance(gp_data, list) and len(gp_data) > 100:
                             _sat_gp_cache["data"] = gp_data
                             _sat_gp_cache["last_fetch"] = now_ts
+                            _sat_gp_cache["source"] = "celestrak"
+                            _save_sat_cache(gp_data)
                             logger.info(f"Satellites: Downloaded {len(gp_data)} GP records from {url}")
                             break
                 except Exception as e:
                     logger.warning(f"Satellites: Failed to fetch from {url}: {e}")
                     continue
 
-            # Fallback: if CelesTrak is blocked, use tle.ivanstanojevic.me TLE API
+            # Fallback 1: TLE API (parallel fetch)
             if _sat_gp_cache["data"] is None:
                 logger.info("Satellites: CelesTrak unreachable, trying TLE fallback API...")
                 try:
@@ -2024,9 +1993,19 @@ def fetch_satellites():
                     if fallback_data and len(fallback_data) > 10:
                         _sat_gp_cache["data"] = fallback_data
                         _sat_gp_cache["last_fetch"] = now_ts
+                        _sat_gp_cache["source"] = "tle_api"
+                        _save_sat_cache(fallback_data)
                         logger.info(f"Satellites: Got {len(fallback_data)} records from TLE fallback API")
                 except Exception as e:
                     logger.error(f"Satellites: TLE fallback also failed: {e}")
+
+            # Fallback 2: local disk cache (survives API outages / rate limits)
+            if _sat_gp_cache["data"] is None:
+                disk_data = _load_sat_cache()
+                if disk_data:
+                    _sat_gp_cache["data"] = disk_data
+                    _sat_gp_cache["last_fetch"] = now_ts - 1500  # Mark as slightly stale so we retry sooner
+                    _sat_gp_cache["source"] = "disk_cache"
 
         data = _sat_gp_cache["data"]
         if not data:
@@ -2035,33 +2014,40 @@ def fetch_satellites():
             return
 
         # Only keep satellites matching the intel classification DB
-        classified = []
-        for sat in data:
-            name = sat.get("OBJECT_NAME", "UNKNOWN").upper()
-            intel = None
-            for key, meta in _SAT_INTEL_DB:
-                if key.upper() in name:
-                    intel = dict(meta)
-                    break
-            if not intel:
-                continue  # Skip junk, debris, CubeSats, bulk constellations
-            entry = {
-                "id": sat.get("NORAD_CAT_ID"),
-                "name": sat.get("OBJECT_NAME", "UNKNOWN"),
-                "MEAN_MOTION": sat.get("MEAN_MOTION"),
-                "ECCENTRICITY": sat.get("ECCENTRICITY"),
-                "INCLINATION": sat.get("INCLINATION"),
-                "RA_OF_ASC_NODE": sat.get("RA_OF_ASC_NODE"),
-                "ARG_OF_PERICENTER": sat.get("ARG_OF_PERICENTER"),
-                "MEAN_ANOMALY": sat.get("MEAN_ANOMALY"),
-                "BSTAR": sat.get("BSTAR"),
-                "EPOCH": sat.get("EPOCH"),
-            }
-            entry.update(intel)
-            classified.append(entry)
+        # Skip re-classification if TLEs haven't changed (saves O(n*m) scan)
+        if _sat_classified_cache["gp_fetch_ts"] == _sat_gp_cache["last_fetch"] and _sat_classified_cache["data"]:
+            classified = _sat_classified_cache["data"]
+            logger.info(f"Satellites: Using cached classification ({len(classified)} sats, TLEs unchanged)")
+        else:
+            classified = []
+            for sat in data:
+                name = sat.get("OBJECT_NAME", "UNKNOWN").upper()
+                intel = None
+                for key, meta in _SAT_INTEL_DB:
+                    if key.upper() in name:
+                        intel = dict(meta)
+                        break
+                if not intel:
+                    continue  # Skip junk, debris, CubeSats, bulk constellations
+                entry = {
+                    "id": sat.get("NORAD_CAT_ID"),
+                    "name": sat.get("OBJECT_NAME", "UNKNOWN"),
+                    "MEAN_MOTION": sat.get("MEAN_MOTION"),
+                    "ECCENTRICITY": sat.get("ECCENTRICITY"),
+                    "INCLINATION": sat.get("INCLINATION"),
+                    "RA_OF_ASC_NODE": sat.get("RA_OF_ASC_NODE"),
+                    "ARG_OF_PERICENTER": sat.get("ARG_OF_PERICENTER"),
+                    "MEAN_ANOMALY": sat.get("MEAN_ANOMALY"),
+                    "BSTAR": sat.get("BSTAR"),
+                    "EPOCH": sat.get("EPOCH"),
+                }
+                entry.update(intel)
+                classified.append(entry)
+            _sat_classified_cache["data"] = classified
+            _sat_classified_cache["gp_fetch_ts"] = _sat_gp_cache["last_fetch"]
+            logger.info(f"Satellites: {len(classified)} intel-classified out of {len(data)} total in catalog")
 
         all_sats = classified
-        logger.info(f"Satellites: {len(classified)} intel-classified out of {len(data)} total in catalog")
 
         # Propagate orbital elements to get current lat/lng/alt using SGP4
         now = datetime.utcnow()
@@ -2156,9 +2142,11 @@ def fetch_satellites():
     # Only overwrite if we got data — don't wipe the map on API timeout
     if sats:
         latest_data["satellites"] = sats
+        latest_data["satellite_source"] = _sat_gp_cache.get("source", "none")
         _mark_fresh("satellites")
     elif not latest_data.get("satellites"):
         latest_data["satellites"] = []
+        latest_data["satellite_source"] = "none"
 
 # ---------------------------------------------------------------------------
 # Real UAV detection from ADS-B data — filters military drone transponders
@@ -2368,14 +2356,14 @@ def update_slow_data():
     logger.info("Slow-tier update complete.")
 
 def update_all_data():
-    """Full update — runs on startup. Fast and slow tiers run IN PARALLEL for fastest startup."""
+    """Full update — runs on startup. All tiers run IN PARALLEL for fastest startup."""
     logger.info("Full data update starting (parallel)...")
-    fetch_airports()  # Cached after first download
-    # Run fast + slow in parallel so the user sees data ASAP
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+    # Run airports, fast, and slow ALL in parallel so the user sees data ASAP
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+        f0 = pool.submit(fetch_airports)  # Cached after first download
         f1 = pool.submit(update_fast_data)
         f2 = pool.submit(update_slow_data)
-        concurrent.futures.wait([f1, f2])
+        concurrent.futures.wait([f0, f1, f2])
     logger.info("Full data update complete.")
 
 scheduler = BackgroundScheduler()
