@@ -1764,27 +1764,29 @@ const MaplibreViewer = ({ data, activeLayers, onEntityClick, flyToLocation, sele
                     </Source>
                 )}
 
-                {/* KiwiSDR Receivers — radio tower icons */}
+                {/* KiwiSDR Receivers — radio tower icons everywhere */}
                 {kiwisdrGeoJSON && (
                     <Source id="kiwisdr" type="geojson" data={kiwisdrGeoJSON as any} cluster={true} clusterRadius={50} clusterMaxZoom={14}>
-                        {/* Cluster glow ring */}
+                        {/* Clusters — tower icon with count */}
                         <Layer
                             id="kiwisdr-clusters"
-                            type="circle"
-                            filter={['has', 'point_count']}
-                            paint={{
-                                'circle-color': 'rgba(245, 158, 11, 0.15)',
-                                'circle-radius': ['step', ['get', 'point_count'], 18, 10, 22, 50, 28, 200, 34],
-                                'circle-stroke-width': 1.5,
-                                'circle-stroke-color': 'rgba(245, 158, 11, 0.5)'
-                            }}
-                        />
-                        <Layer
-                            id="kiwisdr-cluster-count"
                             type="symbol"
                             filter={['has', 'point_count']}
-                            layout={{ 'text-field': '{point_count_abbreviated}', 'text-size': 11, 'text-allow-overlap': true, 'text-font': ['Noto Sans Bold'] }}
-                            paint={{ 'text-color': '#f59e0b', 'text-halo-color': '#000000', 'text-halo-width': 1.5 }}
+                            layout={{
+                                'icon-image': 'svgRadioTower',
+                                'icon-size': 0.9,
+                                'icon-allow-overlap': true,
+                                'text-field': '{point_count_abbreviated}',
+                                'text-size': 10,
+                                'text-offset': [0, 1.4],
+                                'text-allow-overlap': true,
+                                'text-font': ['Noto Sans Bold'],
+                            }}
+                            paint={{
+                                'text-color': '#f59e0b',
+                                'text-halo-color': '#000000',
+                                'text-halo-width': 1.5,
+                            }}
                         />
                         {/* Individual tower icons */}
                         <Layer
