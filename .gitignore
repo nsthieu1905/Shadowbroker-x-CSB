@@ -106,3 +106,10 @@ jobs.json
 
 .claude
 .mise.local.toml
+
+# Local-only internal docs (never commit)
+.local-docs/
+ROADMAP.md
+UPDATEPROTOCOL.md
+CLAUDE.md
+DOCKER_SECRETS.md

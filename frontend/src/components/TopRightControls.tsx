@@ -57,39 +57,56 @@ export default function TopRightControls() {
         }
     };
 
+    const startRestartPolling = () => {
+        setUpdateStatus("restarting");
+
+        // Poll /api/health until backend comes back
+        pollRef.current = setInterval(async () => {
+            try {
+                const h = await fetch(`${API_BASE}/api/health`);
+                if (h.ok) {
+                    if (pollRef.current) clearInterval(pollRef.current);
+                    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                    window.location.reload();
+                }
+            } catch {
+                // Backend still down — keep polling
+            }
+        }, 3000);
+
+        // Give up after 90 seconds
+        timeoutRef.current = setTimeout(() => {
+            if (pollRef.current) clearInterval(pollRef.current);
+            setErrorMessage("Restart timed out — the app may need to be started manually.");
+            setUpdateStatus("update_error");
+        }, 90000);
+    };
+
     const triggerUpdate = async () => {
         setUpdateStatus("updating");
         setErrorMessage("");
         try {
-            const res = await fetch(`${API_BASE}/api/system/update`, { method: "POST" });
+            const headers: Record<string, string> = {};
+            const adminKey = typeof window !== "undefined" ? localStorage.getItem("sb_admin_key") : null;
+            if (adminKey) headers["X-Admin-Key"] = adminKey;
+
+            const res = await fetch(`${API_BASE}/api/system/update`, { method: "POST", headers });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Update failed");
+            if (!res.ok) throw new Error(data.message || data.detail || "Update failed");
 
-            setUpdateStatus("restarting");
-
-            // Poll /api/health until backend comes back
-            pollRef.current = setInterval(async () => {
-                try {
-                    const h = await fetch(`${API_BASE}/api/health`);
-                    if (h.ok) {
-                        if (pollRef.current) clearInterval(pollRef.current);
-                        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-                        window.location.reload();
-                    }
-                } catch {
-                    // Backend still down — keep polling
-                }
-            }, 3000);
-
-            // Give up after 90 seconds
-            timeoutRef.current = setTimeout(() => {
-                if (pollRef.current) clearInterval(pollRef.current);
-                setErrorMessage("Restart timed out — the app may need to be started manually.");
-                setUpdateStatus("update_error");
-            }, 90000);
+            startRestartPolling();
         } catch (err: any) {
-            setErrorMessage(err.message || "Unknown error");
-            setUpdateStatus("update_error");
+            // The update extracts files over the project, which causes the Next.js
+            // dev server to hot-reload and drop the proxy connection mid-request.
+            // A network error during update likely means it SUCCEEDED and the
+            // server is restarting — transition to polling instead of showing failure.
+            const isNetworkDrop = err instanceof TypeError || err.message === "Failed to fetch";
+            if (isNetworkDrop) {
+                startRestartPolling();
+            } else {
+                setErrorMessage(err.message || "Unknown error");
+                setUpdateStatus("update_error");
+            }
         }
     };
 
