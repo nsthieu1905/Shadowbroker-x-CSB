@@ -65,6 +65,9 @@ out_sys.txt
 rss_output.txt
 merged.txt
 tmp_fast.json
+diff.txt
+local_diff.txt
+map_diff.txt
 TheAirTraffic Database.xlsx
 
 # Debug dumps & release artifacts
