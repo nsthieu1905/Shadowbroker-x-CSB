@@ -498,7 +498,14 @@ from services.updater import perform_update, schedule_restart
 @limiter.limit("1/minute")
 async def system_update(request: Request):
     """Download latest release, backup current files, extract update, and restart."""
-    project_root = str(Path(__file__).resolve().parent.parent)
+    # In Docker, __file__ is /app/main.py so .parent.parent resolves to /
+    # which causes PermissionError. Use cwd as fallback when parent.parent
+    # doesn't contain frontend/ or backend/ (i.e. we're already at project root).
+    candidate = Path(__file__).resolve().parent.parent
+    if (candidate / "frontend").is_dir() or (candidate / "backend").is_dir():
+        project_root = str(candidate)
+    else:
+        project_root = os.getcwd()
     result = perform_update(project_root)
     if result.get("status") == "error":
         return Response(

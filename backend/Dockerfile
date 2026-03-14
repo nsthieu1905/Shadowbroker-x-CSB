@@ -23,8 +23,10 @@ RUN npm ci --omit=dev
 COPY . .
 
 # Create a non-root user for security
+# Grant write access to /app so the auto-updater can extract files
 RUN adduser --system --uid 1001 backenduser \
-    && chown -R backenduser /app
+    && chown -R backenduser /app \
+    && chmod -R u+w /app
 
 # Switch to the non-root user
 USER backenduser
