@@ -138,6 +138,32 @@ Open your project folder, Right-Click, and select "Open Git Bash here".
 
 ---
 
+### **☸️ Kubernetes / Helm (Advanced)**
+
+For high-availability deployments or home-lab clusters, ShadowBroker supports deployment via **Helm**. This chart is based on the `bjw-s-labs` template and provides a robust, modular setup for both the backend and frontend.
+
+**1. Add the Repository:**
+```bash
+helm repo add bjw-s-labs https://bjw-s-labs.github.io/helm-charts/
+helm repo update
+```
+
+**2. Install the Chart:**
+```bash
+# Install from the local /chart directory
+helm install shadowbroker ./chart --create-namespace --namespace shadowbroker
+```
+
+**3. Key Features:**
+*   **Modular Architecture:** Individually scale the intelligence backend and the HUD frontend.
+*   **Security Context:** Runs with restricted UIDs (1001) for container hardening.
+*   **Ingress Ready:** Compatible with Traefik, Cert-Manager, and Gateway API for secure, external access to your intelligence node.
+
+*Special thanks to [@chr0n1x](https://github.com/chr0n1x) for contributing the initial Kubernetes architecture.*
+
+---
+
+
 ## ✨ Features
 
 
