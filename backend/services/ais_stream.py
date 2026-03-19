@@ -132,7 +132,8 @@ _ws_thread: threading.Thread | None = None
 _ws_running = False
 
 import os
-CACHE_FILE = os.path.join(os.path.dirname(__file__), "ais_cache.json")
+_BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+CACHE_FILE = os.path.join(_BASE_DIR, "data", "ais_cache.json")
 
 
 def _save_cache():

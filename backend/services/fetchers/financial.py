@@ -10,6 +10,9 @@ from services.fetchers.retry import with_retry
 
 logger = logging.getLogger(__name__)
 
+import os
+_QUIET = os.environ.get("QUIET_LOGS", "").strip().lower() in ("1", "true", "yes", "on")
+
 
 def _fetch_single_ticker(symbol: str, period: str = "2d"):
     """Fetch a single yfinance ticker. Returns (symbol, data_dict) or (symbol, None)."""
@@ -26,7 +29,11 @@ def _fetch_single_ticker(symbol: str, period: str = "2d"):
                 "up": bool(change_percent >= 0)
             }
     except Exception as e:
-        logger.warning(f"Could not fetch data for {symbol}: {e}")
+        msg = f"Could not fetch data for {symbol}: {e}"
+        if _QUIET:
+            logger.debug(msg)
+        else:
+            logger.warning(msg)
     return symbol, None
 
 

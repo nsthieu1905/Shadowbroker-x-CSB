@@ -118,9 +118,16 @@ export interface Ship {
 // ─── SATELLITES ─────────────────────────────────────────────────────────────
 
 export type SatelliteMission =
-  | "military_recon" | "military_sar" | "military_ew"
-  | "sar" | "commercial_imaging" | "navigation"
-  | "early_warning" | "space_station" | "sigint" | "general";
+  | "military_recon"
+  | "military_sar"
+  | "military_ew"
+  | "sar"
+  | "commercial_imaging"
+  | "navigation"
+  | "early_warning"
+  | "space_station"
+  | "sigint"
+  | "general";
 
 export interface Satellite {
   id: number;
@@ -236,6 +243,7 @@ export interface NewsArticle {
   risk_score: number;
   lat: number;
   lng: number;
+  country?: string;
   region?: string;
   coords?: [number, number];
   machine_assessment?: string;

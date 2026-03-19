@@ -2,6 +2,10 @@
 import re
 import logging
 import concurrent.futures
+import json
+import os
+import unicodedata
+import html
 import requests
 import feedparser
 from services.network_utils import fetch_with_curl
@@ -9,6 +13,163 @@ from services.fetchers._store import latest_data, _data_lock, _mark_fresh
 from services.fetchers.retry import with_retry
 
 logger = logging.getLogger("services.data_fetcher")
+
+
+def _infer_country_from_keyword(kw: str | None) -> str | None:
+    if not kw:
+        return None
+    k = kw.strip().lower()
+    if k in {" us ", " usa ", "united states", "washington"}:
+        return "United States"
+    if k in {" uk ", "united kingdom", "london"}:
+        return "United Kingdom"
+    city_to_country = {
+        "kyiv": "Ukraine",
+        "moscow": "Russia",
+        "beijing": "China",
+        "tokyo": "Japan",
+        "seoul": "South Korea",
+        "pyongyang": "North Korea",
+        "paris": "France",
+        "berlin": "Germany",
+        "dubai": "United Arab Emirates",
+        "singapore": "Singapore",
+        "bangkok": "Thailand",
+        "jakarta": "Indonesia",
+        "delhi": "India",
+        "new delhi": "India",
+        "mumbai": "India",
+        "shanghai": "China",
+        "hong kong": "China",
+        "istanbul": "Turkey",
+    }
+    if k in city_to_country:
+        return city_to_country[k]
+
+    country_like = {
+        "venezuela",
+        "brazil",
+        "argentina",
+        "colombia",
+        "mexico",
+        "united states",
+        "canada",
+        "ukraine",
+        "russia",
+        "israel",
+        "iran",
+        "lebanon",
+        "syria",
+        "yemen",
+        "china",
+        "taiwan",
+        "north korea",
+        "south korea",
+        "japan",
+        "afghanistan",
+        "pakistan",
+        "india",
+        "france",
+        "germany",
+        "sudan",
+        "congo",
+        "south africa",
+        "nigeria",
+        "egypt",
+        "zimbabwe",
+        "kenya",
+        "libya",
+        "mali",
+        "niger",
+        "somalia",
+        "ethiopia",
+        "australia",
+    }
+    if k in country_like:
+        return k.title()
+    return None
+
+
+def _strip_accents(s: str) -> str:
+    if not s:
+        return ""
+    return "".join(ch for ch in unicodedata.normalize("NFD", s) if unicodedata.category(ch) != "Mn")
+
+
+def _normalize_vi_text(s: str) -> str:
+    s = (s or "").lower()
+    s = _strip_accents(s)
+    s = re.sub(r"[^a-z0-9\s]", " ", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+
+def _clean_feed_text(s: str) -> str:
+    s = html.unescape(s or "")
+    # Strip HTML tags commonly found in RSS summaries
+    s = re.sub(r"<[^>]+>", " ", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+
+def _load_vn_provinces_34() -> list[dict]:
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    path = os.path.join(base_dir, "data", "vn_provinces_34.json")
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def _build_vn_province_keyword_map() -> tuple[dict, dict]:
+    provinces = _load_vn_provinces_34()
+    kw_to_coords: dict[str, tuple[float, float]] = {}
+    kw_to_region: dict[str, str] = {}
+    for p in provinces:
+        if not isinstance(p, dict):
+            continue
+        name = (p.get("name") or "").strip()
+        if not name:
+            continue
+        lat = p.get("lat")
+        lng = p.get("lng")
+        if lat is None or lng is None:
+            continue
+        try:
+            lat_f = float(lat)
+            lng_f = float(lng)
+        except Exception:
+            continue
+
+        keywords = p.get("keywords")
+        if not isinstance(keywords, list) or not keywords:
+            keywords = [name]
+        for kw in keywords:
+            if not isinstance(kw, str):
+                continue
+            nkw = _normalize_vi_text(kw)
+            if not nkw:
+                continue
+            kw_to_coords[nkw] = (lat_f, lng_f)
+            kw_to_region[nkw] = name
+
+        nname = _normalize_vi_text(name)
+        if nname and nname not in kw_to_coords:
+            kw_to_coords[nname] = (lat_f, lng_f)
+            kw_to_region[nname] = name
+    return kw_to_coords, kw_to_region
+
+
+_VN_PROVINCE_KEYWORD_COORDS, _VN_PROVINCE_KEYWORD_REGION = _build_vn_province_keyword_map()
+_VN_PROVINCE_KEYWORDS_SORTED = sorted(
+    _VN_PROVINCE_KEYWORD_COORDS.items(),
+    key=lambda kv: len(kv[0]),
+    reverse=True,
+)
 
 
 # Keyword -> coordinate mapping for geocoding news articles
@@ -117,8 +278,8 @@ def fetch_news():
         if not feed:
             continue
         for entry in feed.entries[:5]:
-            title = entry.get('title', '')
-            summary = entry.get('summary', '')
+            title = _clean_feed_text(entry.get('title', ''))
+            summary = _clean_feed_text(entry.get('summary', ''))
 
             _seismic_kw = ["earthquake", "seismic", "quake", "tremor", "magnitude", "richter"]
             _text_lower = (title + " " + summary).lower()
@@ -143,6 +304,9 @@ def fetch_news():
             keyword_coords = _KEYWORD_COORDS
 
             lat, lng = None, None
+            region_name = None
+            country_name = None
+            matched_kw = None
 
             if 'georss_point' in entry:
                 geo_parts = entry['georss_point'].split()
@@ -153,37 +317,58 @@ def fetch_news():
                 lat, lng = coords[1], coords[0]
 
             if lat is None:
-                # text may not be defined yet for GDACS path
-                text = (title + " " + summary).lower()
-                padded_text = f" {text} "
-                for kw, coords in keyword_coords.items():
-                    if kw.startswith(" ") or kw.endswith(" "):
-                        if kw in padded_text:
+                combined = f"{title} {summary}"
+                normalized = _normalize_vi_text(combined)
+                padded = f" {normalized} "
+
+                if _VN_PROVINCE_KEYWORDS_SORTED:
+                    for kw, coords in _VN_PROVINCE_KEYWORDS_SORTED:
+                        if f" {kw} " in padded:
                             lat, lng = coords
-                            break
-                    else:
-                        if re.search(r'\b' + re.escape(kw) + r'\b', text):
-                            lat, lng = coords
+                            region_name = _VN_PROVINCE_KEYWORD_REGION.get(kw)
+                            country_name = "Việt Nam"
                             break
 
+                if lat is None:
+                    # text may not be defined yet for GDACS path
+                    text = (title + " " + summary).lower()
+                    padded_text = f" {text} "
+                    for kw, coords in keyword_coords.items():
+                        if kw.startswith(" ") or kw.endswith(" "):
+                            if kw in padded_text:
+                                lat, lng = coords
+                                matched_kw = kw
+                                break
+                        else:
+                            if re.search(r'\b' + re.escape(kw) + r'\b', text):
+                                lat, lng = coords
+                                matched_kw = kw
+                                break
+
+            if country_name is None:
+                country_name = _infer_country_from_keyword(matched_kw)
+
             if lat is not None:
-                key = None
-                cell_x, cell_y = int(lng // 4), int(lat // 4)
-                for dx in range(-1, 2):
-                    for dy in range(-1, 2):
-                        for ckey in _cluster_grid.get((cell_x + dx, cell_y + dy), []):
-                            parts = ckey.split(",")
-                            elat, elng = float(parts[0]), float(parts[1])
-                            if ((lat - elat)**2 + (lng - elng)**2)**0.5 < 4.0:
-                                key = ckey
+                if region_name:
+                    key = f"vn_region:{region_name}"
+                else:
+                    key = None
+                    cell_x, cell_y = int(lng // 4), int(lat // 4)
+                    for dx in range(-1, 2):
+                        for dy in range(-1, 2):
+                            for ckey in _cluster_grid.get((cell_x + dx, cell_y + dy), []):
+                                parts = ckey.split(",")
+                                elat, elng = float(parts[0]), float(parts[1])
+                                if ((lat - elat) ** 2 + (lng - elng) ** 2) ** 0.5 < 4.0:
+                                    key = ckey
+                                    break
+                            if key:
                                 break
                         if key:
                             break
-                    if key:
-                        break
-                if key is None:
-                    key = f"{lat},{lng}"
-                    _cluster_grid.setdefault((cell_x, cell_y), []).append(key)
+                    if key is None:
+                        key = f"{lat},{lng}"
+                        _cluster_grid.setdefault((cell_x, cell_y), []).append(key)
             else:
                 key = title
 
@@ -196,6 +381,8 @@ def fetch_news():
                 "published": entry.get('published', ''),
                 "source": source_name,
                 "risk_score": risk_score,
+                "country": country_name,
+                "region": region_name,
                 "coords": [lat, lng] if lat is not None else None
             })
 
@@ -212,6 +399,8 @@ def fetch_news():
             "source": top_article["source"],
             "risk_score": max_risk,
             "coords": top_article["coords"],
+            "country": top_article.get("country"),
+            "region": top_article.get("region"),
             "cluster_count": len(articles),
             "articles": articles,
             "machine_assessment": None

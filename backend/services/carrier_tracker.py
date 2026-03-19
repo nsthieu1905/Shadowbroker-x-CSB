@@ -280,8 +280,8 @@ def _fetch_gdelt_carrier_news() -> List[dict]:
             data = raw.json()
             articles = data.get("articles", [])
             for art in articles:
-                title = art.get("title", "")
-                url = art.get("url", "")
+                title = (art.get("title") or "")
+                url = (art.get("url") or "")
                 results.append({"title": title, "url": url})
         except (ConnectionError, TimeoutError, ValueError, KeyError, OSError) as e:
             logger.debug(f"GDELT search failed for '{term}': {e}")
@@ -296,7 +296,7 @@ def _parse_carrier_positions_from_news(articles: List[dict]) -> Dict[str, dict]:
     updates: Dict[str, dict] = {}
 
     for article in articles:
-        title = article.get("title", "")
+        title = (article.get("title") or "")
 
         # Try to match a carrier from the title
         hull = _match_carrier(title)

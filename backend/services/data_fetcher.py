@@ -16,6 +16,8 @@ Heavy logic has been extracted into services/fetchers/:
 import logging
 import concurrent.futures
 from datetime import datetime
+import os
+from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -49,6 +51,12 @@ from services.fetchers.geo import (  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
+_TZ_NAME = os.environ.get("APP_TZ", os.environ.get("TZ", "Asia/Ho_Chi_Minh"))
+try:
+    _APP_TZ = ZoneInfo(_TZ_NAME)
+except Exception:
+    _APP_TZ = ZoneInfo("UTC")
+
 # ---------------------------------------------------------------------------
 # Scheduler & Orchestration
 # ---------------------------------------------------------------------------
@@ -65,7 +73,7 @@ def update_fast_data():
         futures = [executor.submit(func) for func in fast_funcs]
         concurrent.futures.wait(futures)
     with _data_lock:
-        latest_data['last_updated'] = datetime.utcnow().isoformat()
+        latest_data['last_updated'] = datetime.now(_APP_TZ).isoformat()
     logger.info("Fast-tier update complete.")
 
 def update_slow_data():
@@ -106,7 +114,7 @@ _scheduler = None
 def start_scheduler():
     global _scheduler
     init_db()
-    _scheduler = BackgroundScheduler(daemon=True)
+    _scheduler = BackgroundScheduler(daemon=True, timezone=_APP_TZ)
 
     # Fast tier — every 60 seconds
     _scheduler.add_job(update_fast_data, 'interval', seconds=60, id='fast_tier', max_instances=1, misfire_grace_time=30)

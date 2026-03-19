@@ -1,0 +1,314 @@
+[
+  {
+    "name": "Tuyên Quang",
+    "admin_center": "Tuyên Quang",
+    "keywords": [
+      "Tuyên Quang"
+    ],
+    "lat": 22.3382057,
+    "lng": 105.0715846
+  },
+  {
+    "name": "Lào Cai",
+    "admin_center": "Yên Bái",
+    "keywords": [
+      "Lào Cai"
+    ],
+    "lat": 21.8091042,
+    "lng": 104.5182832
+  },
+  {
+    "name": "Thái Nguyên",
+    "admin_center": "Thái Nguyên",
+    "keywords": [
+      "Thái Nguyên"
+    ],
+    "lat": 21.9610968,
+    "lng": 105.8440789
+  },
+  {
+    "name": "Phú Thọ",
+    "admin_center": "Phú Thọ",
+    "keywords": [
+      "Phú Thọ"
+    ],
+    "lat": 21.3007538,
+    "lng": 105.1349604
+  },
+  {
+    "name": "Bắc Ninh",
+    "admin_center": "Bắc Giang",
+    "keywords": [
+      "Bắc Ninh"
+    ],
+    "lat": 21.3740092,
+    "lng": 106.4663176
+  },
+  {
+    "name": "Hưng Yên",
+    "admin_center": "Hưng Yên",
+    "keywords": [
+      "Hưng Yên"
+    ],
+    "lat": 20.6065846,
+    "lng": 106.2843471
+  },
+  {
+    "name": "Hải Phòng",
+    "admin_center": "Hải Phòng",
+    "keywords": [
+      "Hải Phòng"
+    ],
+    "lat": 20.8623278,
+    "lng": 106.6799266
+  },
+  {
+    "name": "Ninh Bình",
+    "admin_center": "Ninh Bình",
+    "keywords": [
+      "Ninh Bình"
+    ],
+    "lat": 20.2421142,
+    "lng": 105.9746207
+  },
+  {
+    "name": "Quảng Trị",
+    "admin_center": "Quảng Bình",
+    "keywords": [
+      "Quảng Trị"
+    ],
+    "lat": 17.5157162,
+    "lng": 106.6225405
+  },
+  {
+    "name": "Đà Nẵng",
+    "admin_center": "Đà Nẵng",
+    "keywords": [
+      "Đà Nẵng"
+    ],
+    "lat": 16.068,
+    "lng": 108.212
+  },
+  {
+    "name": "Quảng Ngãi",
+    "admin_center": "Quảng Ngãi",
+    "keywords": [
+      "Quảng Ngãi"
+    ],
+    "lat": 14.9953739,
+    "lng": 108.691729
+  },
+  {
+    "name": "Gia Lai",
+    "admin_center": "Bình Định",
+    "keywords": [
+      "Gia Lai"
+    ],
+    "lat": 14.1086959,
+    "lng": 109.1145897
+  },
+  {
+    "name": "Khánh Hòa",
+    "admin_center": "Khánh Hòa",
+    "keywords": [
+      "Khánh Hòa"
+    ],
+    "lat": 12.2980751,
+    "lng": 108.9950386
+  },
+  {
+    "name": "Lâm Đồng",
+    "admin_center": "Lâm Đồng",
+    "keywords": [
+      "Lâm Đồng"
+    ],
+    "lat": 11.6614957,
+    "lng": 108.1335279
+  },
+  {
+    "name": "Đắk Lắk",
+    "admin_center": "Đắk Lắk",
+    "keywords": [
+      "Đắk Lắk"
+    ],
+    "lat": 12.8741856,
+    "lng": 108.7979302
+  },
+  {
+    "name": "Thành phố Hồ Chí Minh",
+    "admin_center": "Thành phố Hồ Chí Minh",
+    "keywords": [
+      "Thành phố Hồ Chí Minh",
+      "TP Hồ Chí Minh",
+      "TP.HCM",
+      "HCM",
+      "Sài Gòn"
+    ],
+    "lat": 10.7755254,
+    "lng": 106.7021047
+  },
+  {
+    "name": "Đồng Nai",
+    "admin_center": "Đồng Nai",
+    "keywords": [
+      "Đồng Nai"
+    ],
+    "lat": 11.4285446,
+    "lng": 107.1624245
+  },
+  {
+    "name": "Tây Ninh",
+    "admin_center": "Long An",
+    "keywords": [
+      "Tây Ninh"
+    ],
+    "lat": 10.480828,
+    "lng": 107.2008562
+  },
+  {
+    "name": "Cần Thơ",
+    "admin_center": "Cần Thơ",
+    "keywords": [
+      "Cần Thơ"
+    ],
+    "lat": 10.0362046,
+    "lng": 105.7872656
+  },
+  {
+    "name": "Vĩnh Long",
+    "admin_center": "Vĩnh Long",
+    "keywords": [
+      "Vĩnh Long"
+    ],
+    "lat": 10.046765,
+    "lng": 106.2947443
+  },
+  {
+    "name": "Đồng Tháp",
+    "admin_center": "Tiền Giang",
+    "keywords": [
+      "Đồng Tháp"
+    ],
+    "lat": 10.7803737,
+    "lng": 105.3031732
+  },
+  {
+    "name": "Cà Mau",
+    "admin_center": "Cà Mau",
+    "keywords": [
+      "Cà Mau"
+    ],
+    "lat": 9.0180177,
+    "lng": 105.0869724
+  },
+  {
+    "name": "An Giang",
+    "admin_center": "Kiên Giang",
+    "keywords": [
+      "An Giang"
+    ],
+    "lat": 9.7667502,
+    "lng": 104.4726437
+  },
+  {
+    "name": "Hà Nội",
+    "admin_center": "Hà Nội",
+    "keywords": [
+      "Hà Nội",
+      "HN"
+    ],
+    "lat": 21.0283334,
+    "lng": 105.854041
+  },
+  {
+    "name": "Huế",
+    "admin_center": "Huế",
+    "keywords": [
+      "Huế",
+      "Thừa Thiên Huế"
+    ],
+    "lat": 16.4639321,
+    "lng": 107.5863388
+  },
+  {
+    "name": "Lai Châu",
+    "admin_center": "Lai Châu",
+    "keywords": [
+      "Lai Châu"
+    ],
+    "lat": 22.2921668,
+    "lng": 103.1798662
+  },
+  {
+    "name": "Điện Biên",
+    "admin_center": "Điện Biên",
+    "keywords": [
+      "Điện Biên"
+    ],
+    "lat": 21.6546566,
+    "lng": 103.2168632
+  },
+  {
+    "name": "Sơn La",
+    "admin_center": "Sơn La",
+    "keywords": [
+      "Sơn La"
+    ],
+    "lat": 21.2276769,
+    "lng": 104.1575944
+  },
+  {
+    "name": "Lạng Sơn",
+    "admin_center": "Lạng Sơn",
+    "keywords": [
+      "Lạng Sơn"
+    ],
+    "lat": 21.8487579,
+    "lng": 106.6140692
+  },
+  {
+    "name": "Quảng Ninh",
+    "admin_center": "Quảng Ninh",
+    "keywords": [
+      "Quảng Ninh"
+    ],
+    "lat": 21.1718046,
+    "lng": 107.2012742
+  },
+  {
+    "name": "Thanh Hóa",
+    "admin_center": "Thanh Hóa",
+    "keywords": [
+      "Thanh Hóa"
+    ],
+    "lat": 19.9781573,
+    "lng": 105.4816107
+  },
+  {
+    "name": "Nghệ An",
+    "admin_center": "Nghệ An",
+    "keywords": [
+      "Nghệ An"
+    ],
+    "lat": 19.1976001,
+    "lng": 105.060676
+  },
+  {
+    "name": "Hà Tĩnh",
+    "admin_center": "Hà Tĩnh",
+    "keywords": [
+      "Hà Tĩnh"
+    ],
+    "lat": 18.3504832,
+    "lng": 105.7623047
+  },
+  {
+    "name": "Cao Bằng",
+    "admin_center": "Cao Bằng",
+    "keywords": [
+      "Cao Bằng"
+    ],
+    "lat": 22.7426936,
+    "lng": 106.1060926
+  }
+]

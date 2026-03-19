@@ -1,0 +1,514 @@
+[
+  {
+    "name_vi": "Bãi Bình Sơn",
+    "lat": 16.76666667,
+    "lng": 112.21666667,
+    "wikidata_id": "Q11839554",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Bãi Châu Nhai",
+    "lat": 16.33333333,
+    "lng": 112.42777778,
+    "wikidata_id": "Q6758825",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Bãi Gò Nổi",
+    "lat": 16.81666667,
+    "lng": 112.88333333,
+    "wikidata_id": "Q6705779",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Bãi Ngự Bình",
+    "lat": 16.45833333,
+    "lng": 111.65,
+    "wikidata_id": "",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Bãi Quảng Nghĩa",
+    "lat": 16.32777778,
+    "lng": 112.68611111,
+    "wikidata_id": "Q6759378",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Bãi Thủy Tề",
+    "lat": 16.53333333,
+    "lng": 112.55,
+    "wikidata_id": "Q6851518",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Bãi Xà Cừ",
+    "lat": 16.58055556,
+    "lng": 111.70833333,
+    "wikidata_id": "Q6676115",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Bãi Đèn Pha",
+    "lat": 16.53333333,
+    "lng": 111.62833333,
+    "wikidata_id": "",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Bãi Ốc Tai Voi",
+    "lat": 15.71666667,
+    "lng": 112.21666667,
+    "wikidata_id": "Q6811309",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Hòn Tháp",
+    "lat": 16.57680556,
+    "lng": 112.64236111,
+    "wikidata_id": "Q6657835",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Lý Sơn",
+    "lat": 15.38083333,
+    "lng": 109.1175,
+    "wikidata_id": "Q1320095",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Quảng Ngãi",
+    "lat": 15.123875,
+    "lng": 108.811727,
+    "wikidata_id": "Q33304",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Việt Nam Cộng hòa",
+    "lat": 10.8,
+    "lng": 106.65,
+    "wikidata_id": "Q180573",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Đá Bông Bay",
+    "lat": 16.04472222,
+    "lng": 112.51833333,
+    "wikidata_id": "Q866033",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Đá Bắc (Hoàng Sa)",
+    "lat": 17.09027778,
+    "lng": 111.50361111,
+    "wikidata_id": "Q814618",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Đá Chim Én",
+    "lat": 16.34722222,
+    "lng": 112.025,
+    "wikidata_id": "Q2602133",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Đá Hải Sâm",
+    "lat": 16.46222222,
+    "lng": 111.58888889,
+    "wikidata_id": "Q6732263",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Đá Lồi",
+    "lat": 16.23111111,
+    "lng": 111.69305556,
+    "wikidata_id": "Q6850763",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Đá Trà Tây",
+    "lat": 16.54666667,
+    "lng": 111.71333333,
+    "wikidata_id": "Q10921795",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Đảo Bắc (quần đảo Hoàng Sa)",
+    "lat": 16.96388889,
+    "lng": 112.30944444,
+    "wikidata_id": "Q7254514",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Đảo Cây",
+    "lat": 16.97972222,
+    "lng": 112.27111111,
+    "wikidata_id": "Q2232112",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Đảo Linh Côn",
+    "lat": 16.66666667,
+    "lng": 112.73333333,
+    "wikidata_id": "Q6858173",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Đảo Nam (quần đảo Hoàng Sa)",
+    "lat": 16.94638889,
+    "lng": 112.33444444,
+    "wikidata_id": "Q6850299",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Đảo Trung",
+    "lat": 16.955,
+    "lng": 112.32444444,
+    "wikidata_id": "Q6856844",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "Đảo Đá",
+    "lat": 16.84444444,
+    "lng": 112.34722222,
+    "wikidata_id": "Q2218561",
+    "group": "Hoang Sa",
+    "state": "Da Nang"
+  },
+  {
+    "name_vi": "An Bang",
+    "lat": 7.89194444,
+    "lng": 112.92138889,
+    "wikidata_id": "Q1089447",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Borneo",
+    "lat": 0.0,
+    "lng": 114.0,
+    "wikidata_id": "Q36117",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Cỏ Rong",
+    "lat": 11.33333333,
+    "lng": 116.66666667,
+    "wikidata_id": "Q7306628",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Huyền Trân",
+    "lat": 8.02027778,
+    "lng": 110.63083333,
+    "wikidata_id": "Q10883663",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Nam",
+    "lat": 10.49166667,
+    "lng": 116.67833333,
+    "wikidata_id": "Q10908009",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Núi Cầu",
+    "lat": 11.31666667,
+    "lng": 114.58333333,
+    "wikidata_id": "Q10742294",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Phúc Nguyên",
+    "lat": 7.91666667,
+    "lng": 109.96666667,
+    "wikidata_id": "Q12683206",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Phúc Tần",
+    "lat": 8.15,
+    "lng": 110.6,
+    "wikidata_id": "Q11062588",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Quế Đường",
+    "lat": 7.81944444,
+    "lng": 110.50083333,
+    "wikidata_id": "Q11095558",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Thuyền Chài",
+    "lat": 8.16666667,
+    "lng": 113.3,
+    "wikidata_id": "Q6775400",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Trăng Khuyết",
+    "lat": 8.9,
+    "lng": 116.275,
+    "wikidata_id": "Q5641730",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Tư Chính",
+    "lat": 7.52916667,
+    "lng": 109.74444444,
+    "wikidata_id": "Q11353806",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Tổ Muỗi",
+    "lat": 11.58333333,
+    "lng": 116.25,
+    "wikidata_id": "Q6832152",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Vũng Mây",
+    "lat": 7.75777778,
+    "lng": 110.69083333,
+    "wikidata_id": "Q10908962",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi ngầm James",
+    "lat": 3.97388889,
+    "lng": 112.34888889,
+    "wikidata_id": "Q707510",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Đinh Ba",
+    "lat": 11.45194444,
+    "lng": 114.67833333,
+    "wikidata_id": "Q7224008",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Đá Bắc",
+    "lat": 10.82833333,
+    "lng": 116.675,
+    "wikidata_id": "Q10742321",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Bãi Đường",
+    "lat": 11.02166667,
+    "lng": 114.69666667,
+    "wikidata_id": "Q6674373",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Cụm Trường Sa",
+    "lat": 8.64472222,
+    "lng": 111.92,
+    "wikidata_id": "",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Cụm bãi cạn Luconia",
+    "lat": 5.95,
+    "lng": 112.55,
+    "wikidata_id": "Q890078",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Kiêu Ngựa",
+    "lat": 7.7,
+    "lng": 114.16666667,
+    "wikidata_id": "Q1569253",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Palawan",
+    "lat": 9.53333333,
+    "lng": 118.4,
+    "wikidata_id": "Q13869",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Sinh Tồn Đông",
+    "lat": 9.9025,
+    "lng": 114.56416667,
+    "wikidata_id": "Q6775326",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Trường Sa Lớn",
+    "lat": 8.64472222,
+    "lng": 111.92,
+    "wikidata_id": "Q3273381",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Trường Sa Đông",
+    "lat": 8.93111111,
+    "lng": 112.35305556,
+    "wikidata_id": "Q6856755",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá An Lão",
+    "lat": 11.15,
+    "lng": 114.8,
+    "wikidata_id": "Q7212110",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Ba Đầu",
+    "lat": 9.99388889,
+    "lng": 114.6575,
+    "wikidata_id": "Q11722044",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Bắc (Trường Sa)",
+    "lat": 11.4625,
+    "lng": 114.39361111,
+    "wikidata_id": "Q10840508",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Chữ Thập",
+    "lat": 9.54722222,
+    "lng": 112.88944444,
+    "wikidata_id": "Q5447293",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Cá Nhám",
+    "lat": 10.87555556,
+    "lng": 114.92194444,
+    "wikidata_id": "Q6757370",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Gạc Ma",
+    "lat": 9.715,
+    "lng": 114.2875,
+    "wikidata_id": "Q1927337",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Hoài Ân",
+    "lat": 11.06166667,
+    "lng": 114.22166667,
+    "wikidata_id": "Q15938081",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Lớn",
+    "lat": 10.06166667,
+    "lng": 113.85166667,
+    "wikidata_id": "Q6831601",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Nam",
+    "lat": 11.38722222,
+    "lng": 114.29861111,
+    "wikidata_id": "Q6825636",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Núi Le",
+    "lat": 8.71,
+    "lng": 114.185,
+    "wikidata_id": "Q6850404",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Tiên Nữ",
+    "lat": 8.855,
+    "lng": 114.655,
+    "wikidata_id": "Q6790857",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Tây",
+    "lat": 8.85888889,
+    "lng": 112.225,
+    "wikidata_id": "Q6705278",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Én Đất",
+    "lat": 10.35,
+    "lng": 114.7,
+    "wikidata_id": "Q6821098",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  },
+  {
+    "name_vi": "Đá Đông",
+    "lat": 8.82833333,
+    "lng": 112.59666667,
+    "wikidata_id": "Q7262899",
+    "group": "Truong Sa",
+    "state": "Khanh Hoa"
+  }
+]

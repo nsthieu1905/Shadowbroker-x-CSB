@@ -11,6 +11,25 @@ from urllib3.util.retry import Retry
 
 logger = logging.getLogger(__name__)
 
+_QUIET = str(__import__("os").environ.get("QUIET_LOGS", "")).strip().lower() in ("1", "true", "yes", "on")
+
+_warn_throttle: dict[str, float] = {}
+_WARN_THROTTLE_SECONDS = 300  # 5 minutes
+
+
+def _throttled_warning(key: str, message: str):
+    """Emit warning at most once per key per interval when QUIET_LOGS is enabled."""
+    if not _QUIET:
+        logger.warning(message)
+        return
+    now = time.time()
+    last = _warn_throttle.get(key, 0)
+    if now - last >= _WARN_THROTTLE_SECONDS:
+        _warn_throttle[key] = now
+        logger.warning(message)
+    else:
+        logger.debug(message)
+
 # Reusable session with connection pooling and retry logic.
 # Only retry once (total=1) to fail fast — the curl fallback is the real safety net.
 _session = requests.Session()
@@ -88,7 +107,10 @@ def fetch_with_curl(url, method="GET", json_data=None, timeout=15, headers=None)
                 _circuit_breaker.pop(domain, None)
             return res
         except (requests.RequestException, ConnectionError, TimeoutError, OSError) as e:
-            logger.warning(f"Python requests failed for {url} ({e}), falling back to bash curl...")
+            _throttled_warning(
+                f"requests_fail:{domain}",
+                f"Python requests failed for {url} ({e}), falling back to bash curl...",
+            )
             with _cb_lock:
                 _domain_fail_cache[domain] = time.time()
 
@@ -105,8 +127,13 @@ def fetch_with_curl(url, method="GET", json_data=None, timeout=15, headers=None)
     try:
         stdin_data = json.dumps(json_data) if (method == "POST" and json_data) else None
         res = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=timeout + 5,
-            input=stdin_data
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout + 5,
+            input=stdin_data,
         )
         if res.returncode == 0 and res.stdout.strip():
             # Parse HTTP status code from -w output (last line)

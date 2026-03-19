@@ -2,7 +2,20 @@ import os
 import time
 import logging
 
-logging.basicConfig(level=logging.INFO)
+_LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+_QUIET = os.environ.get("QUIET_LOGS", "").strip().lower() in ("1", "true", "yes", "on")
+logging.basicConfig(level=getattr(logging, _LOG_LEVEL, logging.INFO))
+
+if _QUIET:
+    # Reduce noisy third-party loggers (rate limits, access logs, file watcher, scheduler)
+    for _name in (
+        "uvicorn.access",
+        "uvicorn.error",
+        "watchfiles",
+        "apscheduler",
+        "urllib3",
+    ):
+        logging.getLogger(_name).setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
 _start_time = time.time()
 
@@ -107,14 +120,23 @@ async def lifespan(app: FastAPI):
 
     # Start AIS stream first — it loads the disk cache (instant ships) then
     # begins accumulating live vessel data via WebSocket in the background.
-    start_ais_stream()
+    try:
+        start_ais_stream()
+    except Exception as e:
+        logger.error(f"AIS stream failed to start (non-fatal): {e}")
 
     # Carrier tracker runs its own initial update_carrier_positions() internally
     # in _scheduler_loop, so we do NOT call it again in the preload thread.
-    start_carrier_tracker()
+    try:
+        start_carrier_tracker()
+    except Exception as e:
+        logger.error(f"Carrier tracker failed to start (non-fatal): {e}")
 
     # Start the recurring scheduler (fast=60s, slow=30min).
-    start_scheduler()
+    try:
+        start_scheduler()
+    except Exception as e:
+        logger.error(f"Scheduler failed to start (non-fatal): {e}")
 
     # Kick off the full data preload in a background thread so the server
     # is listening on port 8000 instantly.  The frontend's adaptive polling
@@ -131,9 +153,18 @@ async def lifespan(app: FastAPI):
 
     yield
     # Shutdown: Stop all background services
-    stop_ais_stream()
-    stop_scheduler()
-    stop_carrier_tracker()
+    try:
+        stop_ais_stream()
+    except Exception as e:
+        logger.error(f"AIS stream failed to stop cleanly (non-fatal): {e}")
+    try:
+        stop_scheduler()
+    except Exception as e:
+        logger.error(f"Scheduler failed to stop cleanly (non-fatal): {e}")
+    try:
+        stop_carrier_tracker()
+    except Exception as e:
+        logger.error(f"Carrier tracker failed to stop cleanly (non-fatal): {e}")
 
 app = FastAPI(title="Live Risk Dashboard API", lifespan=lifespan)
 app.state.limiter = limiter
@@ -152,6 +183,7 @@ app.add_middleware(
 from services.data_fetcher import update_all_data
 
 _refresh_lock = threading.Lock()
+_news_refresh_lock = threading.Lock()
 
 @app.get("/api/refresh", response_model=RefreshResponse)
 @limiter.limit("2/minute")
@@ -166,6 +198,23 @@ async def force_refresh(request: Request):
     t = threading.Thread(target=_do_refresh)
     t.start()
     return {"status": "refreshing in background"}
+
+
+@app.post("/api/refresh/news", dependencies=[Depends(require_admin)])
+@limiter.limit("10/minute")
+async def refresh_news(request: Request):
+    if not _news_refresh_lock.acquire(blocking=False):
+        return {"status": "news refresh already in progress"}
+
+    def _do_refresh_news():
+        try:
+            from services.fetchers.news import fetch_news
+            fetch_news()
+        finally:
+            _news_refresh_lock.release()
+
+    threading.Thread(target=_do_refresh_news, daemon=True).start()
+    return {"status": "news refresh queued"}
 
 @app.post("/api/ais/feed")
 @limiter.limit("60/minute")
@@ -412,6 +461,13 @@ async def get_flight_route(request: Request, callsign: str, lat: float = 0.0, ln
 
 from services.region_dossier import get_region_dossier
 
+from services.region_dossier import (
+    get_vn_12nm_boundary_geojson,
+    get_vn_land_eez_geojson,
+    get_vn_land_eez_boundary_geojson,
+    get_vietnam_geojson,
+)
+
 @app.get("/api/region-dossier")
 @limiter.limit("30/minute")
 def api_region_dossier(
@@ -421,6 +477,30 @@ def api_region_dossier(
 ):
     """Sync def so FastAPI runs it in a threadpool — prevents blocking the event loop."""
     return get_region_dossier(lat, lng)
+
+
+@app.get("/api/boundaries/vn-12nm")
+@limiter.limit("30/minute")
+def api_vn_12nm_boundary(request: Request):
+    return get_vn_12nm_boundary_geojson()
+
+
+@app.get("/api/boundaries/vn-land-eez")
+@limiter.limit("30/minute")
+def api_vn_land_eez(request: Request):
+    return get_vn_land_eez_geojson()
+
+
+@app.get("/api/boundaries/vn-land-eez-boundary")
+@limiter.limit("30/minute")
+def api_vn_land_eez_boundary(request: Request):
+    return get_vn_land_eez_boundary_geojson()
+
+
+@app.get("/api/boundaries/vn-geojson")
+@limiter.limit("30/minute")
+def api_vn_geojson(request: Request):
+    return get_vietnam_geojson()
 
 from services.sentinel_search import search_sentinel2_scene
 
@@ -473,6 +553,15 @@ async def api_save_news_feeds(request: Request):
     body = await request.json()
     ok = save_feeds(body)
     if ok:
+        def _refresh_news():
+            if not _news_refresh_lock.acquire(blocking=False):
+                return
+            try:
+                from services.fetchers.news import fetch_news
+                fetch_news()
+            finally:
+                _news_refresh_lock.release()
+        threading.Thread(target=_refresh_news, daemon=True).start()
         return {"status": "updated", "count": len(body)}
     return Response(
         content=json_mod.dumps({"status": "error", "message": "Validation failed (max 20 feeds, each needs name/url/weight 1-5)"}),
@@ -518,4 +607,11 @@ async def system_update(request: Request):
     return result
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        access_log=not _QUIET,
+        log_level=_LOG_LEVEL.lower(),
+    )

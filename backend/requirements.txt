@@ -23,3 +23,5 @@ pystac-client==0.8.6
 pytest==8.3.4
 pytest-asyncio==0.25.0
 httpx==0.28.1
+shapely==2.0.3
+pyshp==2.3.1

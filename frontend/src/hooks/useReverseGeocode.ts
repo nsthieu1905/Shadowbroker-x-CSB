@@ -3,7 +3,7 @@ import { GEOCODE_THROTTLE_MS, GEOCODE_DISTANCE_THRESHOLD, GEOCODE_CACHE_SIZE } f
 
 export function useReverseGeocode() {
   const [mouseCoords, setMouseCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [locationLabel, setLocationLabel] = useState('');
+  const [locationLabel, setLocationLabel] = useState("");
   const geocodeCache = useRef<Map<string, string>>(new Map());
   const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastGeocodedPos = useRef<{ lat: number; lng: number } | null>(null);
@@ -11,6 +11,18 @@ export function useReverseGeocode() {
 
   const handleMouseCoords = useCallback((coords: { lat: number; lng: number }) => {
     setMouseCoords(coords);
+
+    // Hard override for Hoàng Sa / Trường Sa to avoid CN attribution from public reverse geocoders.
+    if (coords.lat >= 15.3 && coords.lat <= 17.5 && coords.lng >= 111.0 && coords.lng <= 113.3) {
+      setLocationLabel("Hoàng Sa, Đà Nẵng, Việt Nam");
+      lastGeocodedPos.current = coords;
+      return;
+    }
+    if (coords.lat >= 6.0 && coords.lat <= 12.5 && coords.lng >= 109.0 && coords.lng <= 117.5) {
+      setLocationLabel("Trường Sa, Khánh Hòa, Việt Nam");
+      lastGeocodedPos.current = coords;
+      return;
+    }
 
     if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
     geocodeTimer.current = setTimeout(async () => {
@@ -20,7 +32,7 @@ export function useReverseGeocode() {
         if (dLat < GEOCODE_DISTANCE_THRESHOLD && dLng < GEOCODE_DISTANCE_THRESHOLD) return;
       }
 
-      const gridKey = `${(coords.lat).toFixed(2)},${(coords.lng).toFixed(2)}`;
+      const gridKey = `${coords.lat.toFixed(2)},${coords.lng.toFixed(2)}`;
       const cached = geocodeCache.current.get(gridKey);
       if (cached) {
         setLocationLabel(cached);
@@ -34,16 +46,16 @@ export function useReverseGeocode() {
       try {
         const res = await fetch(
           `https://nominatim.openstreetmap.org/reverse?lat=${coords.lat}&lon=${coords.lng}&format=json&zoom=10&addressdetails=1`,
-          { headers: { 'Accept-Language': 'en' }, signal: geocodeAbort.current.signal }
+          { headers: { "Accept-Language": "en" }, signal: geocodeAbort.current.signal },
         );
         if (res.ok) {
           const data = await res.json();
           const addr = data.address || {};
-          const city = addr.city || addr.town || addr.village || addr.county || '';
-          const state = addr.state || addr.region || '';
-          const country = addr.country || '';
+          const city = addr.city || addr.town || addr.village || addr.county || "";
+          const state = addr.state || addr.region || "";
+          const country = addr.country || "";
           const parts = [city, state, country].filter(Boolean);
-          const label = parts.join(', ') || data.display_name?.split(',').slice(0, 3).join(',') || 'Unknown';
+          const label = parts.join(", ") || data.display_name?.split(",").slice(0, 3).join(",") || "Unknown";
 
           if (geocodeCache.current.size > GEOCODE_CACHE_SIZE) {
             const iter = geocodeCache.current.keys();
@@ -57,7 +69,9 @@ export function useReverseGeocode() {
           lastGeocodedPos.current = coords;
         }
       } catch (e: any) {
-        if (e.name !== 'AbortError') { /* Silently fail - keep last label */ }
+        if (e.name !== "AbortError") {
+          /* Silently fail - keep last label */
+        }
       }
     }, GEOCODE_THROTTLE_MS);
   }, []);

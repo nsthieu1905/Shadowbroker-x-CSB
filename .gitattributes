@@ -1,0 +1,6 @@
+backend/data/**/*.prj filter=lfs diff=lfs merge=lfs -text
+backend/data/**/*.cpg filter=lfs diff=lfs merge=lfs -text
+backend/data/**/*.gpkg filter=lfs diff=lfs merge=lfs -text
+backend/data/**/*.shp filter=lfs diff=lfs merge=lfs -text
+backend/data/**/*.shx filter=lfs diff=lfs merge=lfs -text
+backend/data/**/*.dbf filter=lfs diff=lfs merge=lfs -text

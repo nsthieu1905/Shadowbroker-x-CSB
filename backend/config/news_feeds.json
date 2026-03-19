@@ -1,43 +1,28 @@
 {
   "feeds": [
     {
-      "name": "NPR",
-      "url": "https://feeds.npr.org/1004/rss.xml",
-      "weight": 4
-    },
-    {
-      "name": "BBC",
-      "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
+      "name": "Báo tuổi trẻ",
+      "url": "https://tuoitre.vn/rss/tin-moi-nhat.rss",
       "weight": 3
     },
     {
-      "name": "AlJazeera",
-      "url": "https://www.aljazeera.com/xml/rss/all.xml",
-      "weight": 2
-    },
-    {
-      "name": "NYT",
-      "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-      "weight": 1
-    },
-    {
-      "name": "GDACS",
-      "url": "https://www.gdacs.org/xml/rss.xml",
-      "weight": 5
-    },
-    {
-      "name": "NHK",
-      "url": "https://www3.nhk.or.jp/nhkworld/rss/world.xml",
+      "name": "Dân trí",
+      "url": "https://dantri.com.vn/rss/home.rss",
       "weight": 3
     },
     {
-      "name": "CNA",
-      "url": "https://www.channelnewsasia.com/rssfeed/8395986",
+      "name": "VN Express",
+      "url": "https://vnexpress.net/rss/tin-moi-nhat.rss",
       "weight": 3
     },
     {
-      "name": "Mercopress",
-      "url": "https://en.mercopress.com/rss/",
+      "name": "Báo thanh niên",
+      "url": "https://thanhnien.vn/rss/thoi-su.rss",
+      "weight": 3
+    },
+    {
+      "name": "Nhân dân",
+      "url": "https://nhandan.vn/rss/chinhtri-1171.rss",
       "weight": 3
     }
   ]
