@@ -87,7 +87,7 @@ echo [*] Frontend dependencies OK.
 echo.
 echo ===================================================
 echo   Starting services...
-echo   Dashboard: http://localhost:3000
+echo   Dashboard: http://localhost:3036
 echo   Keep this window open! Initial load takes ~10s.
 echo ===================================================
 echo   (Press Ctrl+C to stop)

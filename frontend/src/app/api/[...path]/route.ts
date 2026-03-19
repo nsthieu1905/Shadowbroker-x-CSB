@@ -13,8 +13,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Headers that must not be forwarded to the backend.
 const STRIP_REQUEST = new Set([
-  "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
-  "te", "trailers", "transfer-encoding", "upgrade", "host",
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailers",
+  "transfer-encoding",
+  "upgrade",
+  "host",
 ]);
 
 // Headers that must not be forwarded back to the browser.
@@ -22,13 +29,20 @@ const STRIP_REQUEST = new Set([
 // automatically decompresses gzip/br responses — forwarding these headers
 // would cause ERR_CONTENT_DECODING_FAILED in the browser.
 const STRIP_RESPONSE = new Set([
-  "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
-  "te", "trailers", "transfer-encoding", "upgrade",
-  "content-encoding", "content-length",
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailers",
+  "transfer-encoding",
+  "upgrade",
+  "content-encoding",
+  "content-length",
 ]);
 
 async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
-  const backendUrl = process.env.BACKEND_URL ?? "http://localhost:8000";
+  const backendUrl = process.env.BACKEND_URL ?? "http://localhost:8036";
   const targetUrl = new URL(`/api/${path.join("/")}`, backendUrl);
   targetUrl.search = req.nextUrl.search;
 

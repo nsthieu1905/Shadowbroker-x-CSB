@@ -607,10 +607,15 @@ async def system_update(request: Request):
     return result
 
 if __name__ == "__main__":
+    _port = 8036
+    try:
+        _port = int(os.environ.get("PORT", str(_port)))
+    except Exception:
+        _port = 8036
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=_port,
         reload=True,
         access_log=not _QUIET,
         log_level=_LOG_LEVEL.lower(),

@@ -4,7 +4,7 @@ services:
       context: ./backend
     container_name: shadowbroker-backend
     ports:
-      - "8000:8000"
+      - "8036:8036"
     environment:
       - AIS_API_KEY=${AIS_API_KEY}
       - OPENSKY_CLIENT_ID=${OPENSKY_CLIENT_ID}
@@ -16,7 +16,7 @@ services:
       - backend_data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/live-data/fast"]
+      test: ["CMD", "curl", "-f", "http://localhost:8036/api/live-data/fast"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -25,24 +25,24 @@ services:
       resources:
         limits:
           memory: 2G
-          cpus: '2'
+          cpus: "2"
 
   frontend:
     build:
       context: ./frontend
     container_name: shadowbroker-frontend
     ports:
-      - "3000:3000"
+      - "3036:3036"
     environment:
       # Points the Next.js server-side proxy at the backend container via Docker networking.
       # Change this if your backend runs on a different host or port.
-      - BACKEND_URL=http://backend:8000
+      - BACKEND_URL=http://backend:8036
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3036/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -51,7 +51,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: '1'
+          cpus: "1"
 
 volumes:
   backend_data:

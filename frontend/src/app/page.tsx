@@ -117,7 +117,25 @@ const _SB_STORAGE_EVENT = "sb_local_storage_change";
 function _emitStorageChange() {
   if (typeof window === "undefined") return;
   try {
-    window.dispatchEvent(new Event(_SB_STORAGE_EVENT));
+    // Defer notification so we don't trigger store updates during React render.
+    // Some call sites update multiple pieces of state in one handler.
+    if (typeof queueMicrotask === "function") {
+      queueMicrotask(() => {
+        try {
+          window.dispatchEvent(new Event(_SB_STORAGE_EVENT));
+        } catch {
+          // ignore
+        }
+      });
+    } else {
+      setTimeout(() => {
+        try {
+          window.dispatchEvent(new Event(_SB_STORAGE_EVENT));
+        } catch {
+          // ignore
+        }
+      }, 0);
+    }
   } catch {
     // ignore
   }
@@ -142,7 +160,7 @@ function _hydrateLayersStoreFromLocalStorage() {
   _emitStorageChange();
 }
 
-function useActiveFiltersStore(): [Record<string, string[]>, (next: Record<string, string[]>) => void] {
+function useActiveFiltersStore(): [ActiveFiltersState, React.Dispatch<React.SetStateAction<ActiveFiltersState>>] {
   const subscribe = (onStoreChange: () => void) => {
     if (typeof window === "undefined") return () => {};
     const handler = () => onStoreChange();
@@ -159,15 +177,17 @@ function useActiveFiltersStore(): [Record<string, string[]>, (next: Record<strin
     () => _activeFiltersStore.current,
     () => _SERVER_FILTERS_SNAPSHOT,
   );
-  const setFilters = (next: Record<string, string[]>) => {
-    _activeFiltersStore.current = next || {};
-    saveActiveFilters(next);
+  const setFilters: React.Dispatch<React.SetStateAction<ActiveFiltersState>> = (next) => {
+    const resolved = typeof next === "function" ? next(_activeFiltersStore.current) : next;
+    const safe = (resolved || {}) as ActiveFiltersState;
+    _activeFiltersStore.current = safe;
+    saveActiveFilters(safe);
     _emitStorageChange();
   };
   return [filters, setFilters];
 }
 
-function useActiveLayersStore(): [typeof DEFAULT_ACTIVE_LAYERS, (next: typeof DEFAULT_ACTIVE_LAYERS) => void] {
+function useActiveLayersStore(): [ActiveLayersState, React.Dispatch<React.SetStateAction<ActiveLayersState>>] {
   const subscribe = (onStoreChange: () => void) => {
     if (typeof window === "undefined") return () => {};
     const handler = () => onStoreChange();
@@ -184,9 +204,11 @@ function useActiveLayersStore(): [typeof DEFAULT_ACTIVE_LAYERS, (next: typeof DE
     () => _activeLayersStore.current,
     () => _SERVER_LAYERS_SNAPSHOT,
   );
-  const setLayers = (next: typeof DEFAULT_ACTIVE_LAYERS) => {
-    _activeLayersStore.current = next || { ...DEFAULT_ACTIVE_LAYERS };
-    saveActiveLayers(next);
+  const setLayers: React.Dispatch<React.SetStateAction<ActiveLayersState>> = (next) => {
+    const resolved = typeof next === "function" ? next(_activeLayersStore.current) : next;
+    const safe = (resolved || { ...DEFAULT_ACTIVE_LAYERS }) as ActiveLayersState;
+    _activeLayersStore.current = safe;
+    saveActiveLayers(safe);
     _emitStorageChange();
   };
   return [layers, setLayers];

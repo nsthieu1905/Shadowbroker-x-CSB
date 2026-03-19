@@ -291,11 +291,16 @@ const OnboardingModal = React.memo(function OnboardingModal({ onClose, onOpenSet
 });
 
 export function useOnboarding() {
-  const [showOnboarding, setShowOnboarding] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const done = localStorage.getItem(STORAGE_KEY);
-    return !done;
-  });
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    try {
+      const done = localStorage.getItem(STORAGE_KEY);
+      setShowOnboarding(!done);
+    } catch {
+      setShowOnboarding(false);
+    }
+  }, []);
 
   return { showOnboarding, setShowOnboarding };
 }
