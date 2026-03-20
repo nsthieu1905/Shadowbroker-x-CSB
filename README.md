@@ -8,14 +8,7 @@
 
 ---
 
-
-
-
 https://github.com/user-attachments/assets/248208ec-62f7-49d1-831d-4bd0a1fa6852
-
-
-
-
 
 **ShadowBroker** is a real-time, multi-domain OSINT dashboard that aggregates live data from dozens of open-source intelligence feeds and renders them on a unified dark-ops map interface. It tracks aircraft, ships, satellites, earthquakes, conflict zones, CCTV networks, GPS jamming, and breaking geopolitical events — all updating in real time.
 
@@ -41,12 +34,12 @@ The project does not introduce new surveillance capabilities — it aggregates a
 
 ## Interesting Use Cases
 
-* Track everything from Air Force One to the private jets of billionaires, dictators, and corporations
-* Monitor satellites passing overhead and see high-resolution satellite imagery
-* Nose around local emergency scanners
-* Watch naval traffic worldwide
-* Detect GPS jamming zones
-* Follow earthquakes and other natural disasters in real time
+- Track everything from Air Force One to the private jets of billionaires, dictators, and corporations
+- Monitor satellites passing overhead and see high-resolution satellite imagery
+- Nose around local emergency scanners
+- Watch naval traffic worldwide
+- Detect GPS jamming zones
+- Follow earthquakes and other natural disasters in real time
 
 ---
 
@@ -55,7 +48,7 @@ The project does not introduce new surveillance capabilities — it aggregates a
 Linux/Mac
 
 ```bash
-git clone https://github.com/BigBodyCobain/Shadowbroker.git
+git clone https://github.com/nsthieu1905/Shadowbroker-x-CSB.git
 cd Shadowbroker
 ./compose.sh up -d
 ```
@@ -63,12 +56,12 @@ cd Shadowbroker
 Windows
 
 ```bash
-git clone https://github.com/BigBodyCobain/Shadowbroker.git
+git clone https://github.com/nsthieu1905/Shadowbroker-x-CSB.git
 cd Shadowbroker
 docker-compose up -d
 ```
 
-Open `http://localhost:3000` to view the dashboard! *(Requires Docker or Podman)*
+Open `http://localhost:3036` to view the dashboard! _(Requires Docker or Podman)_
 
 `compose.sh` auto-detects `docker compose`, `docker-compose`, `podman compose`, and `podman-compose`.
 If both runtimes are installed, you can force Podman with `./compose.sh --engine podman up -d`.
@@ -76,7 +69,7 @@ Do not append a trailing `.` to that command; Compose treats it as a service nam
 
 ---
 
-##  🔄 **How to Update**
+## 🔄 **How to Update**
 
 If you are coming from v0.9.5 or older, you must pull the new code and rebuild your containers to see the latest data layers and performance fixes.
 
@@ -85,10 +78,13 @@ If you are coming from v0.9.5 or older, you must pull the new code and rebuild y
 Since these systems are Unix-based, you can use the helper script directly.
 
 **Pull the latest code:**
+
 ```bash
 git pull origin main
 ```
+
 **Run the update script:**
+
 ```bash
 ./compose.sh down
 ./compose.sh up --build -d
@@ -102,11 +98,13 @@ Windows handles scripts differently. You have two ways to update:
 Use the docker compose commands directly. This works in any Windows terminal (CMD, PowerShell, or Windows Terminal).
 
 **Pull the latest code:**
+
 ```DOS
 git pull origin main
 ```
 
 **Rebuild the containers:**
+
 ```DOS
 docker compose down
 docker compose up --build -d
@@ -119,6 +117,7 @@ If you prefer using the ./compose.sh script on Windows, you must use Git Bash (i
 Open your project folder, Right-Click, and select "Open Git Bash here".
 
 **Run the Linux commands:**
+
 ```bash
 ./compose.sh down
 ./compose.sh up --build -d
@@ -143,112 +142,113 @@ Open your project folder, Right-Click, and select "Open Git Bash here".
 For high-availability deployments or home-lab clusters, ShadowBroker supports deployment via **Helm**. This chart is based on the `bjw-s-labs` template and provides a robust, modular setup for both the backend and frontend.
 
 **1. Add the Repository:**
+
 ```bash
 helm repo add bjw-s-labs https://bjw-s-labs.github.io/helm-charts/
 helm repo update
 ```
 
 **2. Install the Chart:**
+
 ```bash
 # Install from the local /chart directory
 helm install shadowbroker ./chart --create-namespace --namespace shadowbroker
 ```
 
 **3. Key Features:**
-*   **Modular Architecture:** Individually scale the intelligence backend and the HUD frontend.
-*   **Security Context:** Runs with restricted UIDs (1001) for container hardening.
-*   **Ingress Ready:** Compatible with Traefik, Cert-Manager, and Gateway API for secure, external access to your intelligence node.
 
-*Special thanks to [@chr0n1x](https://github.com/chr0n1x) for contributing the initial Kubernetes architecture.*
+- **Modular Architecture:** Individually scale the intelligence backend and the HUD frontend.
+- **Security Context:** Runs with restricted UIDs (1001) for container hardening.
+- **Ingress Ready:** Compatible with Traefik, Cert-Manager, and Gateway API for secure, external access to your intelligence node.
+
+_Special thanks to [@chr0n1x](https://github.com/chr0n1x) for contributing the initial Kubernetes architecture._
 
 ---
 
-
 ## ✨ Features
-
 
 ### 🛩️ Aviation Tracking
 
-* **Commercial Flights** — Real-time positions via OpenSky Network (~5,000+ aircraft)
-* **Private Aircraft** — Light GA, turboprops, bizjets tracked separately
-* **Private Jets** — High-net-worth individual aircraft with owner identification
-* **Military Flights** — Tankers, ISR, fighters, transports via adsb.lol military endpoint
-* **Flight Trail Accumulation** — Persistent breadcrumb trails for all tracked aircraft
-* **Holding Pattern Detection** — Automatically flags aircraft circling (>300° total turn)
-* **Aircraft Classification** — Shape-accurate SVG icons: airliners, turboprops, bizjets, helicopters
-* **Grounded Detection** — Aircraft below 100ft AGL rendered with grey icons
+- **Commercial Flights** — Real-time positions via OpenSky Network (~5,000+ aircraft)
+- **Private Aircraft** — Light GA, turboprops, bizjets tracked separately
+- **Private Jets** — High-net-worth individual aircraft with owner identification
+- **Military Flights** — Tankers, ISR, fighters, transports via adsb.lol military endpoint
+- **Flight Trail Accumulation** — Persistent breadcrumb trails for all tracked aircraft
+- **Holding Pattern Detection** — Automatically flags aircraft circling (>300° total turn)
+- **Aircraft Classification** — Shape-accurate SVG icons: airliners, turboprops, bizjets, helicopters
+- **Grounded Detection** — Aircraft below 100ft AGL rendered with grey icons
 
 ### 🚢 Maritime Tracking
 
-* **AIS Vessel Stream** — 25,000+ vessels via aisstream.io WebSocket (real-time)
-* **Ship Classification** — Cargo, tanker, passenger, yacht, military vessel types with color-coded icons
-* **Carrier Strike Group Tracker** — All 11 active US Navy aircraft carriers with OSINT-estimated positions
-  * Automated GDELT news scraping for carrier movement intelligence
-  * 50+ geographic region-to-coordinate mappings
-  * Disk-cached positions, auto-updates at 00:00 & 12:00 UTC
-* **Cruise & Passenger Ships** — Dedicated layer for cruise liners and ferries
-* **Clustered Display** — Ships cluster at low zoom with count labels, decluster on zoom-in
+- **AIS Vessel Stream** — 25,000+ vessels via aisstream.io WebSocket (real-time)
+- **Ship Classification** — Cargo, tanker, passenger, yacht, military vessel types with color-coded icons
+- **Carrier Strike Group Tracker** — All 11 active US Navy aircraft carriers with OSINT-estimated positions
+  - Automated GDELT news scraping for carrier movement intelligence
+  - 50+ geographic region-to-coordinate mappings
+  - Disk-cached positions, auto-updates at 00:00 & 12:00 UTC
+- **Cruise & Passenger Ships** — Dedicated layer for cruise liners and ferries
+- **Clustered Display** — Ships cluster at low zoom with count labels, decluster on zoom-in
 
 ### 🛰️ Space & Satellites
 
-* **Orbital Tracking** — Real-time satellite positions via CelesTrak TLE data + SGP4 propagation (2,000+ active satellites, no API key required)
-* **Mission-Type Classification** — Color-coded by mission: military recon (red), SAR (cyan), SIGINT (white), navigation (blue), early warning (magenta), commercial imaging (green), space station (gold)
+- **Orbital Tracking** — Real-time satellite positions via CelesTrak TLE data + SGP4 propagation (2,000+ active satellites, no API key required)
+- **Mission-Type Classification** — Color-coded by mission: military recon (red), SAR (cyan), SIGINT (white), navigation (blue), early warning (magenta), commercial imaging (green), space station (gold)
 
 ### 🌍 Geopolitics & Conflict
 
-* **Global Incidents** — GDELT-powered conflict event aggregation (last 8 hours, ~1,000 events)
-* **Ukraine Frontline** — Live warfront GeoJSON from DeepState Map
-* **SIGINT/RISINT News Feed** — Real-time RSS aggregation from multiple intelligence-focused sources with user-customizable feeds (up to 20 sources, configurable priority weights 1-5)
-* **Region Dossier** — Right-click anywhere on the map for:
-  * Country profile (population, capital, languages, currencies, area)
-  * Head of state & government type (Wikidata SPARQL)
-  * Local Wikipedia summary with thumbnail
+- **Global Incidents** — GDELT-powered conflict event aggregation (last 8 hours, ~1,000 events)
+- **Ukraine Frontline** — Live warfront GeoJSON from DeepState Map
+- **SIGINT/RISINT News Feed** — Real-time RSS aggregation from multiple intelligence-focused sources with user-customizable feeds (up to 20 sources, configurable priority weights 1-5)
+- **Region Dossier** — Right-click anywhere on the map for:
+  - Country profile (population, capital, languages, currencies, area)
+  - Head of state & government type (Wikidata SPARQL)
+  - Local Wikipedia summary with thumbnail
 
 ### 🛰️ Satellite Imagery
 
-* **NASA GIBS (MODIS Terra)** — Daily true-color satellite imagery overlay with 30-day time slider, play/pause animation, and opacity control (~250m/pixel)
-* **High-Res Satellite (Esri)** — Sub-meter resolution imagery via Esri World Imagery — zoom into buildings and terrain detail (zoom 18+)
-* **Sentinel-2 Intel Card** — Right-click anywhere on the map for a floating intel card showing the latest Sentinel-2 satellite photo with capture date, cloud cover %, and clickable full-resolution image (10m resolution, updated every ~5 days)
-* **SATELLITE Style Preset** — Quick-toggle high-res imagery via the STYLE button (DEFAULT → SATELLITE → FLIR → NVG → CRT)
+- **NASA GIBS (MODIS Terra)** — Daily true-color satellite imagery overlay with 30-day time slider, play/pause animation, and opacity control (~250m/pixel)
+- **High-Res Satellite (Esri)** — Sub-meter resolution imagery via Esri World Imagery — zoom into buildings and terrain detail (zoom 18+)
+- **Sentinel-2 Intel Card** — Right-click anywhere on the map for a floating intel card showing the latest Sentinel-2 satellite photo with capture date, cloud cover %, and clickable full-resolution image (10m resolution, updated every ~5 days)
+- **SATELLITE Style Preset** — Quick-toggle high-res imagery via the STYLE button (DEFAULT → SATELLITE → FLIR → NVG → CRT)
 
 ### 📻 Software-Defined Radio (SDR)
 
-* **KiwiSDR Receivers** — 500+ public SDR receivers plotted worldwide with clustered amber markers
-* **Live Radio Tuner** — Click any KiwiSDR node to open an embedded SDR tuner directly in the SIGINT panel
-* **Metadata Display** — Node name, location, antenna type, frequency bands, active users
+- **KiwiSDR Receivers** — 500+ public SDR receivers plotted worldwide with clustered amber markers
+- **Live Radio Tuner** — Click any KiwiSDR node to open an embedded SDR tuner directly in the SIGINT panel
+- **Metadata Display** — Node name, location, antenna type, frequency bands, active users
 
 ### 📷 Surveillance
 
-* **CCTV Mesh** — 2,000+ live traffic cameras from:
-  * 🇬🇧 Transport for London JamCams
-  * 🇺🇸 Austin, TX TxDOT
-  * 🇺🇸 NYC DOT
-  * 🇸🇬 Singapore LTA
-  * Custom URL ingestion
-* **Feed Rendering** — Automatic detection & rendering of video, MJPEG, HLS, embed, satellite tile, and image feeds
-* **Clustered Map Display** — Green dots cluster with count labels, decluster on zoom
+- **CCTV Mesh** — 2,000+ live traffic cameras from:
+  - 🇬🇧 Transport for London JamCams
+  - 🇺🇸 Austin, TX TxDOT
+  - 🇺🇸 NYC DOT
+  - 🇸🇬 Singapore LTA
+  - Custom URL ingestion
+- **Feed Rendering** — Automatic detection & rendering of video, MJPEG, HLS, embed, satellite tile, and image feeds
+- **Clustered Map Display** — Green dots cluster with count labels, decluster on zoom
 
 ### 📡 Signal Intelligence
 
-* **GPS Jamming Detection** — Real-time analysis of aircraft NAC-P (Navigation Accuracy Category) values
-  * Grid-based aggregation identifies interference zones
-  * Red overlay squares with "GPS JAM XX%" severity labels
-* **Radio Intercept Panel** — Scanner-style UI for monitoring communications
+- **GPS Jamming Detection** — Real-time analysis of aircraft NAC-P (Navigation Accuracy Category) values
+  - Grid-based aggregation identifies interference zones
+  - Red overlay squares with "GPS JAM XX%" severity labels
+- **Radio Intercept Panel** — Scanner-style UI for monitoring communications
 
 ### 🔥 Environmental & Infrastructure Monitoring
 
-* **NASA FIRMS Fire Hotspots (24h)** — 5,000+ global thermal anomalies from NOAA-20 VIIRS satellite, updated every cycle. Flame-shaped icons color-coded by fire radiative power (FRP): yellow (low), orange, red, dark red (intense). Clustered at low zoom with fire-shaped cluster markers.
-* **Space Weather Badge** — Live NOAA geomagnetic storm indicator in the bottom status bar. Color-coded Kp index: green (quiet), yellow (active), red (storm G1–G5). Data from SWPC planetary K-index 1-minute feed.
-* **Internet Outage Monitoring** — Regional internet connectivity alerts from Georgia Tech IODA. Grey markers at affected regions with severity percentage. Uses only reliable datasources (BGP routing tables, active ping probing) — no telescope or interpolated data.
-* **Data Center Mapping** — 2,000+ global data centers plotted from a curated dataset. Clustered purple markers with server-rack icons. Click for operator, location, and automatic internet outage cross-referencing by country.
+- **NASA FIRMS Fire Hotspots (24h)** — 5,000+ global thermal anomalies from NOAA-20 VIIRS satellite, updated every cycle. Flame-shaped icons color-coded by fire radiative power (FRP): yellow (low), orange, red, dark red (intense). Clustered at low zoom with fire-shaped cluster markers.
+- **Space Weather Badge** — Live NOAA geomagnetic storm indicator in the bottom status bar. Color-coded Kp index: green (quiet), yellow (active), red (storm G1–G5). Data from SWPC planetary K-index 1-minute feed.
+- **Internet Outage Monitoring** — Regional internet connectivity alerts from Georgia Tech IODA. Grey markers at affected regions with severity percentage. Uses only reliable datasources (BGP routing tables, active ping probing) — no telescope or interpolated data.
+- **Data Center Mapping** — 2,000+ global data centers plotted from a curated dataset. Clustered purple markers with server-rack icons. Click for operator, location, and automatic internet outage cross-referencing by country.
 
 ### 🌐 Additional Layers
 
-* **Earthquakes (24h)** — USGS real-time earthquake feed with magnitude-scaled markers
-* **Day/Night Cycle** — Solar terminator overlay showing global daylight/darkness
-* **Global Markets Ticker** — Live financial market indices (minimizable)
-* **Measurement Tool** — Point-to-point distance & bearing measurement on the map
-* **LOCATE Bar** — Search by coordinates (31.8, 34.8) or place name (Tehran, Strait of Hormuz) to fly directly to any location — geocoded via OpenStreetMap Nominatim
+- **Earthquakes (24h)** — USGS real-time earthquake feed with magnitude-scaled markers
+- **Day/Night Cycle** — Solar terminator overlay showing global daylight/darkness
+- **Global Markets Ticker** — Live financial market indices (minimizable)
+- **Measurement Tool** — Point-to-point distance & bearing measurement on the map
+- **LOCATE Bar** — Search by coordinates (31.8, 34.8) or place name (Tehran, Strait of Hormuz) to fly directly to any location — geocoded via OpenStreetMap Nominatim
 
 ![Gaza](https://github.com/user-attachments/assets/f2c953b2-3528-4360-af5a-7ea34ff28489)
 
@@ -294,32 +294,32 @@ helm install shadowbroker ./chart --create-namespace --namespace shadowbroker
 
 ## 📊 Data Sources & APIs
 
-| Source | Data | Update Frequency | API Key Required |
-|---|---|---|---|
-| [OpenSky Network](https://opensky-network.org) | Commercial & private flights | ~60s | Optional (anonymous limited) |
-| [adsb.lol](https://adsb.lol) | Military aircraft | ~60s | No |
-| [aisstream.io](https://aisstream.io) | AIS vessel positions | Real-time WebSocket | **Yes** |
-| [CelesTrak](https://celestrak.org) | Satellite orbital positions (TLE + SGP4) | ~60s | No |
-| [USGS Earthquake](https://earthquake.usgs.gov) | Global seismic events | ~60s | No |
-| [GDELT Project](https://www.gdeltproject.org) | Global conflict events | ~6h | No |
-| [DeepState Map](https://deepstatemap.live) | Ukraine frontline | ~30min | No |
-| [Transport for London](https://api.tfl.gov.uk) | London CCTV JamCams | ~5min | No |
-| [TxDOT](https://its.txdot.gov) | Austin TX traffic cameras | ~5min | No |
-| [NYC DOT](https://webcams.nyctmc.org) | NYC traffic cameras | ~5min | No |
-| [Singapore LTA](https://datamall.lta.gov.sg) | Singapore traffic cameras | ~5min | **Yes** |
-| [RestCountries](https://restcountries.com) | Country profile data | On-demand (cached 24h) | No |
-| [Wikidata SPARQL](https://query.wikidata.org) | Head of state data | On-demand (cached 24h) | No |
-| [Wikipedia API](https://en.wikipedia.org/api) | Location summaries & aircraft images | On-demand (cached) | No |
-| [NASA GIBS](https://gibs.earthdata.nasa.gov) | MODIS Terra daily satellite imagery | Daily (24-48h delay) | No |
-| [Esri World Imagery](https://www.arcgis.com) | High-res satellite basemap | Static (periodically updated) | No |
-| [MS Planetary Computer](https://planetarycomputer.microsoft.com) | Sentinel-2 L2A scenes (right-click) | On-demand | No |
-| [KiwiSDR](https://kiwisdr.com) | Public SDR receiver locations | ~30min | No |
-| [OSM Nominatim](https://nominatim.openstreetmap.org) | Place name geocoding (LOCATE bar) | On-demand | No |
-| [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov) | NOAA-20 VIIRS fire/thermal hotspots | ~120s | No |
-| [NOAA SWPC](https://services.swpc.noaa.gov) | Space weather Kp index & solar events | ~120s | No |
-| [IODA (Georgia Tech)](https://ioda.inetintel.cc.gatech.edu) | Regional internet outage alerts | ~120s | No |
-| [DC Map (GitHub)](https://github.com/Ringmast4r/Data-Center-Map---Global) | Global data center locations | Static (cached 7d) | No |
-| [CARTO Basemaps](https://carto.com) | Dark map tiles | Continuous | No |
+| Source                                                                    | Data                                     | Update Frequency              | API Key Required             |
+| ------------------------------------------------------------------------- | ---------------------------------------- | ----------------------------- | ---------------------------- |
+| [OpenSky Network](https://opensky-network.org)                            | Commercial & private flights             | ~60s                          | Optional (anonymous limited) |
+| [adsb.lol](https://adsb.lol)                                              | Military aircraft                        | ~60s                          | No                           |
+| [aisstream.io](https://aisstream.io)                                      | AIS vessel positions                     | Real-time WebSocket           | **Yes**                      |
+| [CelesTrak](https://celestrak.org)                                        | Satellite orbital positions (TLE + SGP4) | ~60s                          | No                           |
+| [USGS Earthquake](https://earthquake.usgs.gov)                            | Global seismic events                    | ~60s                          | No                           |
+| [GDELT Project](https://www.gdeltproject.org)                             | Global conflict events                   | ~6h                           | No                           |
+| [DeepState Map](https://deepstatemap.live)                                | Ukraine frontline                        | ~30min                        | No                           |
+| [Transport for London](https://api.tfl.gov.uk)                            | London CCTV JamCams                      | ~5min                         | No                           |
+| [TxDOT](https://its.txdot.gov)                                            | Austin TX traffic cameras                | ~5min                         | No                           |
+| [NYC DOT](https://webcams.nyctmc.org)                                     | NYC traffic cameras                      | ~5min                         | No                           |
+| [Singapore LTA](https://datamall.lta.gov.sg)                              | Singapore traffic cameras                | ~5min                         | **Yes**                      |
+| [RestCountries](https://restcountries.com)                                | Country profile data                     | On-demand (cached 24h)        | No                           |
+| [Wikidata SPARQL](https://query.wikidata.org)                             | Head of state data                       | On-demand (cached 24h)        | No                           |
+| [Wikipedia API](https://en.wikipedia.org/api)                             | Location summaries & aircraft images     | On-demand (cached)            | No                           |
+| [NASA GIBS](https://gibs.earthdata.nasa.gov)                              | MODIS Terra daily satellite imagery      | Daily (24-48h delay)          | No                           |
+| [Esri World Imagery](https://www.arcgis.com)                              | High-res satellite basemap               | Static (periodically updated) | No                           |
+| [MS Planetary Computer](https://planetarycomputer.microsoft.com)          | Sentinel-2 L2A scenes (right-click)      | On-demand                     | No                           |
+| [KiwiSDR](https://kiwisdr.com)                                            | Public SDR receiver locations            | ~30min                        | No                           |
+| [OSM Nominatim](https://nominatim.openstreetmap.org)                      | Place name geocoding (LOCATE bar)        | On-demand                     | No                           |
+| [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov)                        | NOAA-20 VIIRS fire/thermal hotspots      | ~120s                         | No                           |
+| [NOAA SWPC](https://services.swpc.noaa.gov)                               | Space weather Kp index & solar events    | ~120s                         | No                           |
+| [IODA (Georgia Tech)](https://ioda.inetintel.cc.gatech.edu)               | Regional internet outage alerts          | ~120s                         | No                           |
+| [DC Map (GitHub)](https://github.com/Ringmast4r/Data-Center-Map---Global) | Global data center locations             | Static (cached 7d)            | No                           |
+| [CARTO Basemaps](https://carto.com)                                       | Dark map tiles                           | Continuous                    | No                           |
 
 ---
 
@@ -330,13 +330,13 @@ helm install shadowbroker ./chart --create-namespace --namespace shadowbroker
 The repo includes a `docker-compose.yml` that builds both images locally.
 
 ```bash
-git clone https://github.com/BigBodyCobain/Shadowbroker.git
+git clone https://github.com/nsthieu1905/Shadowbroker-x-CSB.git
 cd Shadowbroker
 # Add your API keys in a repo-root .env file (optional — see Environment Variables below)
 ./compose.sh up -d
 ```
 
-Open `http://localhost:3000` to view the dashboard.
+Open `http://localhost:3036` to view the dashboard.
 
 > **Deploying publicly or on a LAN?** No configuration needed for most setups.
 > The frontend proxies all API calls through the Next.js server to `BACKEND_URL`,
@@ -378,11 +378,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - AIS_API_KEY=your_aisstream_key          # Required — get one free at aisstream.io
-      - OPENSKY_CLIENT_ID=                       # Optional — higher flight data rate limits
-      - OPENSKY_CLIENT_SECRET=                   # Optional — paired with Client ID above
-      - LTA_ACCOUNT_KEY=                         # Optional — Singapore CCTV cameras
-      - CORS_ORIGINS=                            # Optional — comma-separated allowed origins
+      - AIS_API_KEY=your_aisstream_key # Required — get one free at aisstream.io
+      - OPENSKY_CLIENT_ID= # Optional — higher flight data rate limits
+      - OPENSKY_CLIENT_SECRET= # Optional — paired with Client ID above
+      - LTA_ACCOUNT_KEY= # Optional — Singapore CCTV cameras
+      - CORS_ORIGINS= # Optional — comma-separated allowed origins
     volumes:
       - backend_data:/app/data
     restart: unless-stopped
@@ -393,7 +393,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - BACKEND_URL=http://backend:8000   # Docker internal networking — no rebuild needed
+      - BACKEND_URL=http://backend:8000 # Docker internal networking — no rebuild needed
     depends_on:
       - backend
     restart: unless-stopped
@@ -427,16 +427,16 @@ If you want to modify the code or run from source:
 
 #### Prerequisites
 
-* **Node.js** 18+ and **npm** — [nodejs.org](https://nodejs.org/)
-* **Python** 3.10, 3.11, or 3.12 with `pip` — [python.org](https://www.python.org/downloads/) (**check "Add to PATH"** during install)
-  * ⚠️ Python 3.13+ may have compatibility issues with some dependencies. **3.11 or 3.12 is recommended.**
-* API keys for: `aisstream.io` (required), and optionally `opensky-network.org` (OAuth2), `lta.gov.sg`
+- **Node.js** 18+ and **npm** — [nodejs.org](https://nodejs.org/)
+- **Python** 3.10, 3.11, or 3.12 with `pip` — [python.org](https://www.python.org/downloads/) (**check "Add to PATH"** during install)
+  - ⚠️ Python 3.13+ may have compatibility issues with some dependencies. **3.11 or 3.12 is recommended.**
+- API keys for: `aisstream.io` (required), and optionally `opensky-network.org` (OAuth2), `lta.gov.sg`
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/shadowbroker.git
+git clone https://github.com/your-username/Shadowbroker-x-CSB.git
 cd shadowbroker/live-risk-dashboard
 
 # Backend setup
@@ -465,8 +465,8 @@ npm run dev
 
 This starts:
 
-* **Next.js** frontend on `http://localhost:3000`
-* **FastAPI** backend on `http://localhost:8000`
+- **Next.js** frontend on `http://localhost:3036`
+- **FastAPI** backend on `http://localhost:8036`
 
 ### Local AIS Receiver (Optional)
 
@@ -495,30 +495,30 @@ AIS-catcher decodes VHF radio signals on 161.975 MHz and 162.025 MHz and POSTs d
 
 All layers are independently toggleable from the left panel:
 
-| Layer | Default | Description |
-|---|---|---|
-| Commercial Flights | ✅ ON | Airlines, cargo, GA aircraft |
-| Private Flights | ✅ ON | Non-commercial private aircraft |
-| Private Jets | ✅ ON | High-value bizjets with owner data |
-| Military Flights | ✅ ON | Military & government aircraft |
-| Tracked Aircraft | ✅ ON | Special interest watch list |
-| Satellites | ✅ ON | Orbital assets by mission type |
-| Carriers / Mil / Cargo | ✅ ON | Navy carriers, cargo ships, tankers |
-| Civilian Vessels | ❌ OFF | Yachts, fishing, recreational |
-| Cruise / Passenger | ✅ ON | Cruise ships and ferries |
-| Tracked Yachts | ✅ ON | Billionaire & oligarch superyachts (Yacht-Alert DB) |
-| Earthquakes (24h) | ✅ ON | USGS seismic events |
-| CCTV Mesh | ❌ OFF | Surveillance camera network |
-| Ukraine Frontline | ✅ ON | Live warfront positions |
-| Global Incidents | ✅ ON | GDELT conflict events |
-| GPS Jamming | ✅ ON | NAC-P degradation zones |
-| MODIS Terra (Daily) | ❌ OFF | NASA GIBS daily satellite imagery |
-| High-Res Satellite | ❌ OFF | Esri sub-meter satellite imagery |
-| KiwiSDR Receivers | ❌ OFF | Public SDR radio receivers |
-| Fire Hotspots (24h) | ❌ OFF | NASA FIRMS VIIRS thermal anomalies |
-| Internet Outages | ❌ OFF | IODA regional connectivity alerts |
-| Data Centers | ❌ OFF | Global data center locations (2,000+) |
-| Day / Night Cycle | ✅ ON | Solar terminator overlay |
+| Layer                  | Default | Description                                         |
+| ---------------------- | ------- | --------------------------------------------------- |
+| Commercial Flights     | ✅ ON   | Airlines, cargo, GA aircraft                        |
+| Private Flights        | ✅ ON   | Non-commercial private aircraft                     |
+| Private Jets           | ✅ ON   | High-value bizjets with owner data                  |
+| Military Flights       | ✅ ON   | Military & government aircraft                      |
+| Tracked Aircraft       | ✅ ON   | Special interest watch list                         |
+| Satellites             | ✅ ON   | Orbital assets by mission type                      |
+| Carriers / Mil / Cargo | ✅ ON   | Navy carriers, cargo ships, tankers                 |
+| Civilian Vessels       | ❌ OFF  | Yachts, fishing, recreational                       |
+| Cruise / Passenger     | ✅ ON   | Cruise ships and ferries                            |
+| Tracked Yachts         | ✅ ON   | Billionaire & oligarch superyachts (Yacht-Alert DB) |
+| Earthquakes (24h)      | ✅ ON   | USGS seismic events                                 |
+| CCTV Mesh              | ❌ OFF  | Surveillance camera network                         |
+| Ukraine Frontline      | ✅ ON   | Live warfront positions                             |
+| Global Incidents       | ✅ ON   | GDELT conflict events                               |
+| GPS Jamming            | ✅ ON   | NAC-P degradation zones                             |
+| MODIS Terra (Daily)    | ❌ OFF  | NASA GIBS daily satellite imagery                   |
+| High-Res Satellite     | ❌ OFF  | Esri sub-meter satellite imagery                    |
+| KiwiSDR Receivers      | ❌ OFF  | Public SDR radio receivers                          |
+| Fire Hotspots (24h)    | ❌ OFF  | NASA FIRMS VIIRS thermal anomalies                  |
+| Internet Outages       | ❌ OFF  | IODA regional connectivity alerts                   |
+| Data Centers           | ❌ OFF  | Global data center locations (2,000+)               |
+| Day / Night Cycle      | ✅ ON   | Solar terminator overlay                            |
 
 ---
 
@@ -526,15 +526,15 @@ All layers are independently toggleable from the left panel:
 
 The platform is optimized for handling massive real-time datasets:
 
-* **Gzip Compression** — API payloads compressed ~92% (11.6 MB → 915 KB)
-* **ETag Caching** — `304 Not Modified` responses skip redundant JSON parsing
-* **Viewport Culling** — Only features within the visible map bounds (+20% buffer) are rendered
-* **Imperative Map Updates** — High-volume layers (flights, satellites, fires) bypass React reconciliation via direct `setData()` calls
-* **Clustered Rendering** — Ships, CCTV, earthquakes, and data centers use MapLibre clustering to reduce feature count
-* **Debounced Viewport Updates** — 300ms debounce prevents GeoJSON rebuild thrash during pan/zoom; 2s debounce on dense layers (satellites, fires)
-* **Position Interpolation** — Smooth 10s tick animation between data refreshes
-* **React.memo** — Heavy components wrapped to prevent unnecessary re-renders
-* **Coordinate Precision** — Lat/lng rounded to 5 decimals (~1m) to reduce JSON size
+- **Gzip Compression** — API payloads compressed ~92% (11.6 MB → 915 KB)
+- **ETag Caching** — `304 Not Modified` responses skip redundant JSON parsing
+- **Viewport Culling** — Only features within the visible map bounds (+20% buffer) are rendered
+- **Imperative Map Updates** — High-volume layers (flights, satellites, fires) bypass React reconciliation via direct `setData()` calls
+- **Clustered Rendering** — Ships, CCTV, earthquakes, and data centers use MapLibre clustering to reduce feature count
+- **Debounced Viewport Updates** — 300ms debounce prevents GeoJSON rebuild thrash during pan/zoom; 2s debounce on dense layers (satellites, fires)
+- **Position Interpolation** — Smooth 10s tick animation between data refreshes
+- **React.memo** — Heavy components wrapped to prevent unnecessary re-renders
+- **Coordinate Precision** — Lat/lng rounded to 5 decimals (~1m) to reduce JSON size
 
 ---
 
@@ -603,11 +603,11 @@ LTA_ACCOUNT_KEY=your_lta_key                  # Singapore CCTV cameras
 
 ### Frontend
 
-| Variable | Where to set | Purpose |
-|---|---|---|
+| Variable      | Where to set                                        | Purpose                                                                                                                                     |
+| ------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `BACKEND_URL` | `environment` in `docker-compose.yml`, or shell env | URL the Next.js server uses to proxy API calls to the backend. Defaults to `http://backend:8000`. **Runtime variable — no rebuild needed.** |
 
-**How it works:** The frontend proxies all `/api/*` requests through the Next.js server to `BACKEND_URL` using Docker's internal networking. Browsers only talk to port 3000; port 8000 never needs to be exposed externally. For local dev without Docker, `BACKEND_URL` defaults to `http://localhost:8000`.
+**How it works:** The frontend proxies all `/api/*` requests through the Next.js server to `BACKEND_URL` using Docker's internal networking. Browsers only talk to port 3000; port 8000 never needs to be exposed externally. For local dev without Docker, `BACKEND_URL` defaults to `http://localhost:8036`.
 
 ---
 
